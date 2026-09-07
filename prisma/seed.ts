@@ -13,15 +13,20 @@ if (!databaseUrl) {
 }
 
 const url = new URL(databaseUrl)
+const schema = url.searchParams.get('schema') || 'public'
+const isRemote = url.hostname !== 'localhost' && url.hostname !== '127.0.0.1'
+
 const pool = new Pool({
   host: url.hostname,
   port: parseInt(url.port || '5432', 10),
   database: url.pathname.slice(1).split('?')[0],
-  user: decodeURIComponent(url.username),
+  user: url.username ? decodeURIComponent(url.username) : undefined,
   password: url.password ? decodeURIComponent(url.password) : undefined,
+  ssl: isRemote ? { rejectUnauthorized: false } : false,
+  options: `-c search_path=${schema}`,
 })
 
-const prisma = new PrismaClient({ adapter: new PrismaPg(pool) })
+const prisma = new PrismaClient({ adapter: new PrismaPg(pool, { schema }) })
 
 async function main() {
   await prisma.$connect()

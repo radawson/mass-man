@@ -23,12 +23,14 @@ let poolConfig: {
   max: number
   idleTimeoutMillis: number
   connectionTimeoutMillis: number
+  options?: string
 }
 
 try {
   const url = new URL(databaseUrl)
   const dbName = url.pathname.slice(1).split('?')[0]
   const password = url.password ? decodeURIComponent(url.password) : undefined
+  const schema = url.searchParams.get('schema') || 'public'
 
   poolConfig = {
     host: url.hostname,
@@ -44,6 +46,7 @@ try {
     max: 10,
     idleTimeoutMillis: 30000,
     connectionTimeoutMillis: 2000,
+    options: `-c search_path=${schema}`,
   }
 } catch {
   const isRemote = !databaseUrl.includes('localhost') && !databaseUrl.includes('127.0.0.1')
@@ -68,7 +71,15 @@ if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.pool = pool
 }
 
-const adapter = new PrismaPg(pool)
+const adapter = new PrismaPg(pool, {
+  schema: (() => {
+    try {
+      return new URL(databaseUrl).searchParams.get('schema') || 'public'
+    } catch {
+      return 'public'
+    }
+  })(),
+})
 
 export const prisma =
   globalForPrisma.prisma ||

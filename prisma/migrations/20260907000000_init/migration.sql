@@ -1,5 +1,6 @@
--- CreateSchema
-CREATE SCHEMA IF NOT EXISTS "public";
+-- Isolate Mass Man from other apps in this cluster
+CREATE SCHEMA IF NOT EXISTS "massman";
+SET search_path TO massman;
 
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN', 'GUEST');
