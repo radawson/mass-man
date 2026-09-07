@@ -1,0 +1,20 @@
+[Unit]
+Description=Mass Man body tracking
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=torvaldsl
+Group=torvaldsl
+WorkingDirectory=/home/torvaldsl/mass-man
+EnvironmentFile=/home/torvaldsl/mass-man/.env
+Environment=NODE_ENV=production
+Environment=PATH=/home/torvaldsl/.nvm/versions/node/v22.21.1/bin:/usr/bin
+ExecStart=/home/torvaldsl/.nvm/versions/node/v22.21.1/bin/node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3004
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+
+[Install]
+WantedBy=multi-user.target

@@ -1,0 +1,62 @@
+{
+  "name": "mass-man",
+  "description": "Mass Man is a body-mass and composition tracking system",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev -p 3004",
+    "build": "next build",
+    "start": "next start -H 127.0.0.1 -p ${PORT:-3004}",
+    "lint": "eslint src/",
+    "test": "jest",
+    "postinstall": "npx prisma generate",
+    "db:seed": "tsx prisma/seed.ts",
+    "db:migrate": "npx prisma migrate dev",
+    "db:deploy": "npx prisma migrate deploy"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@date-fns/tz": "^1.5.0",
+    "@prisma/adapter-pg": "^7.10.0",
+    "@prisma/client": "^7.10.0",
+    "bcryptjs": "^3.0.3",
+    "date-fns": "^4.4.0",
+    "decimal.js": "^10.6.0",
+    "dotenv": "^17.4.2",
+    "lucide-react": "^1.41.0",
+    "next": "16.3.4",
+    "next-auth": "^4.24.15",
+    "pg": "^8.23.0",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8",
+    "react-hot-toast": "^2.6.0",
+    "tailwindcss": "^4.3.3",
+    "zod": "^4.5.4"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@tailwindcss/postcss": "^4.3.3",
+    "@types/jest": "^30.0.0",
+    "@types/node": "^26",
+    "@types/pg": "^8.23.1",
+    "@types/react": "19.2.18",
+    "@types/react-dom": "^19.2.7",
+    "eslint": "^9.39.4",
+    "eslint-config-next": "16.3.4",
+    "jest": "^30.5.1",
+    "jest-environment-jsdom": "^30.5.1",
+    "prisma": "^7.10.0",
+    "ts-jest": "^29.4.12",
+    "tsx": "^4.23.13",
+    "typescript": "5.9.3"
+  },
+  "overrides": {
+    "@types/pg": "$@types/pg",
+    "typescript": "5.9.3"
+  },
+  "engines": {
+    "node": "^20.19 || ^22.12 || >=24.0"
+  }
+}

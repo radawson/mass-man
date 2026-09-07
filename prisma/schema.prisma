@@ -1,0 +1,120 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  USER
+  ADMIN
+  GUEST
+}
+
+enum UnitSystem {
+  METRIC
+  IMPERIAL
+}
+
+enum ThemePreference {
+  LIGHT
+  DARK
+  SYSTEM
+}
+
+enum Sex {
+  MALE
+  FEMALE
+}
+
+enum BodyFatSource {
+  DEVICE
+  ESTIMATED
+  AUTO
+}
+
+enum GoalMetric {
+  WEIGHT
+  BODY_FAT
+  WAIST
+  CHEST
+  HIPS
+  UPPER_ARM
+  THIGH
+}
+
+enum GoalDirection {
+  DECREASE
+  INCREASE
+  MAINTAIN
+}
+
+model User {
+  id             String           @id @default(uuid())
+  email          String           @unique
+  name           String
+  password       String?
+  role           Role             @default(USER)
+  isKeycloakUser Boolean          @default(false)
+  isActive       Boolean          @default(true)
+  displayUnit    UnitSystem       @default(IMPERIAL)
+  theme          ThemePreference  @default(SYSTEM)
+  timeZone       String           @default("America/New_York")
+  heightCm       Decimal?         @db.Decimal(6, 2)
+  sex            Sex?
+  bodyFatSource  BodyFatSource    @default(AUTO)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+
+  measurements Measurement[]
+  goals        Goal[]
+
+  @@map("users")
+}
+
+model Measurement {
+  id                   String    @id @default(uuid())
+  userId               String
+  recordedAt           DateTime
+  weightKg             Decimal   @db.Decimal(8, 4)
+  bodyFatPercentDevice Decimal?  @db.Decimal(5, 2)
+  neckCm               Decimal?  @db.Decimal(6, 2)
+  shouldersCm          Decimal?  @db.Decimal(6, 2)
+  chestCm              Decimal?  @db.Decimal(6, 2)
+  waistCm              Decimal?  @db.Decimal(6, 2)
+  hipsCm               Decimal?  @db.Decimal(6, 2)
+  leftUpperArmCm       Decimal?  @db.Decimal(6, 2)
+  rightUpperArmCm      Decimal?  @db.Decimal(6, 2)
+  leftThighCm          Decimal?  @db.Decimal(6, 2)
+  rightThighCm         Decimal?  @db.Decimal(6, 2)
+  leftCalfCm           Decimal?  @db.Decimal(6, 2)
+  rightCalfCm          Decimal?  @db.Decimal(6, 2)
+  note                 String?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, recordedAt])
+  @@map("measurements")
+}
+
+model Goal {
+  id             String        @id @default(uuid())
+  userId         String
+  metric         GoalMetric
+  direction      GoalDirection
+  startValue     Decimal       @db.Decimal(10, 4)
+  targetValue    Decimal       @db.Decimal(10, 4)
+  startDate      DateTime
+  milestoneNotes Json?
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, metric])
+  @@map("goals")
+}

@@ -1,0 +1,29 @@
+# Measurement & Money-Style Decimal Conventions
+
+## Core Rule
+
+**Never use `float`, `double`, or any binary floating-point type for body measurements, body fat, BMI, or composition.** These types cannot accurately represent decimal fractions.
+
+## Recommended Approaches
+
+| Approach | Use? | Why |
+|----|---|-----|
+| Decimal / BigDecimal | ✅ Best for logic | Exact, handles fractions |
+| Integer (smallest unit) | ✅ Acceptable | Exact |
+| Float / Double | ❌ **Never** for stored or aggregated values | Inexact |
+
+## Best Practices
+
+1. **Canonical storage**: weight in kilograms (`Decimal(8, 4)`), lengths in centimeters (`Decimal(6, 2)`), body fat as percent (`Decimal(5, 2)`).
+2. **Transport as strings**: Zod → `String(v)` so JSON numbers cannot lose precision.
+3. **Use decimal.js** for conversion, US Navy log10 estimates, daily means, BMI, fat/lean mass, and goal progress.
+4. **Round only at display**: keep intermediate calculations unrounded.
+
+```typescript
+// ❌ BAD
+const total = 1.1 + 2.2
+
+// ✅ GOOD
+import Decimal from 'decimal.js'
+const total = new Decimal('1.1').plus('2.2')
+```

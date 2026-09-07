@@ -1,0 +1,102 @@
+@import "tailwindcss";
+
+@theme {
+  --color-lime-accent: #c8f000;
+  --color-lime-accent-hover: #d4ff2a;
+  --color-lime-accent-muted: #9cbc00;
+}
+
+:root {
+  --color-bg: #f4f5f0;
+  --color-surface: #ffffff;
+  --color-surface-2: #eceee6;
+  --color-border: #d5d8cc;
+  --color-text: #111111;
+  --color-muted: #5c6154;
+  --color-accent: #7a9600;
+  --color-accent-fg: #111111;
+  --color-danger: #dc2626;
+  --color-success: #16a34a;
+  --color-chart-weight: #7a9600;
+  --color-chart-waist: #444444;
+}
+
+html.dark {
+  --color-bg: #0a0a0a;
+  --color-surface: #161616;
+  --color-surface-2: #1f1f1f;
+  --color-border: #2e2e2e;
+  --color-text: #f5f5f5;
+  --color-muted: #a3a3a3;
+  --color-accent: #c8f000;
+  --color-accent-fg: #111111;
+  --color-danger: #f87171;
+  --color-success: #4ade80;
+  --color-chart-weight: #c8f000;
+  --color-chart-waist: #f5f5f5;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-bg);
+    color: var(--color-text);
+  }
+}
+
+@layer components {
+  .btn {
+    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+  }
+
+  .btn-primary {
+    background-color: var(--color-accent);
+    color: var(--color-accent-fg);
+  }
+
+  .btn-primary:hover {
+    filter: brightness(1.08);
+  }
+
+  .btn-secondary {
+    background-color: var(--color-surface-2);
+    color: var(--color-text);
+    border: 1px solid var(--color-border);
+  }
+
+  .btn-danger {
+    background-color: var(--color-danger);
+    color: #fff;
+  }
+
+  .input {
+    @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+    color: var(--color-text);
+  }
+
+  .card {
+    @apply rounded-lg p-6;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-border);
+  }
+
+  .app-page-container {
+    @apply w-full px-4 sm:px-6 lg:px-8 py-8;
+  }
+
+  .app-nav-container {
+    @apply w-full px-4 sm:px-6 lg:px-8;
+  }
+
+  .kpi-tile {
+    @apply rounded-lg p-4;
+    background-color: var(--color-surface);
+    border: 1px solid var(--color-accent);
+  }
+
+  .table-wrap {
+    @apply w-full overflow-x-auto rounded-lg;
+    border: 1px solid var(--color-border);
+  }
+}
