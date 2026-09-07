@@ -1,51 +1,97 @@
-# Mass Man
+# Production deployment
 
-Body-mass and composition tracker. Each signed-in user has isolated measurements, goals, and settings.
+Mass Man on ptx-web02 lives in `/home/torvaldsl/mass-man`, speaks HTTP on `127.0.0.1:3004`, and is reverse-proxied by nginx. HAProxy at `10.10.13.1` terminates TLS for `mass.partridgecrossing.org`.
 
-## Stack
+For local Docker Postgres and product behavior, see the [README](../README.md).
 
-Next.js 16, Prisma 7, PostgreSQL, Tailwind v4, NextAuth (credentials + optional Keycloak).
+## Layout
 
-## Local development
+| Piece | Where |
+|---|---|
+| Source | `git clone https://github.com/radawson/mass-man.git` |
+| App dir | `/home/torvaldsl/mass-man` |
+| Env | `/home/torvaldsl/mass-man/.env` (gitignored) |
+| Process | PM2 app `mass-man` (`npm start`) |
+| Node | nvm `v22.21.1` |
+| Nginx | `/etc/nginx/sites-available/mass.conf` |
+| Optional unit | `deploy/mass-man.service` (do not run beside PM2) |
 
-```bash
-cp example.env .env
-docker compose up -d
-npm install
-npx prisma migrate dev --name init
-npm run db:seed   # optional default admin
-npm run dev       # http://localhost:3004
+## Database
+
+Prefer a dedicated database named `massman` if the role can `CREATE DATABASE` (`deploy/create-db.py` is a helper).
+
+If that is denied, use a schema on an existing cluster:
+
+```env
+DATABASE_URL="postgresql://USER:PASS@10.10.13.50:5433/kontado?schema=massman"
 ```
 
-Default seed admin (change after first login):
+The init migration creates schema `massman` and sets `search_path`. Do not migrate into `public` on a shared database.
 
-- Email: `admin@massman.local`
-- Password: `ChangeMe123!`
+Remote hosts enable SSL unless `DATABASE_SSL=false`.
 
-Docker Postgres uses host port **5433** so it can run beside Kontado on 5432.
-
-## Tests
+## First install
 
 ```bash
-npm test
+export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$PATH"
+git clone https://github.com/radawson/mass-man.git ~/mass-man
+cd ~/mass-man
+# write .env (NEXTAUTH_URL, secret, DATABASE_URL, PORT=3004)
+# deploy/write-prod-env.py can scaffold it; review before using
+npm ci
+npx prisma migrate deploy
+# optional: npm run db:seed   then change the seed password
+npm run build
+pm2 start npm --name mass-man -- start
+pm2 save
 ```
 
-## Production (systemd)
-
-1. Copy the app to `/opt/mass-man` (or your chosen path).
-2. Set production values in `.env` (`DATABASE_URL`, `NEXTAUTH_URL`, `NEXTAUTH_SECRET`, Keycloak if used).
-3. `npm ci && npm run build && npx prisma migrate deploy`
-4. Install the unit:
+Confirm the app before nginx:
 
 ```bash
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3004/login
+```
+
+## Nginx
+
+`deploy/nginx.conf` must **not** set `real_ip_header` / `set_real_ip_from`; those are already in `/etc/nginx/nginx.conf`. Duplicating them fails `nginx -t`.
+
+```bash
+sudo /home/torvaldsl/mass-man/deploy/install-nginx.sh
+```
+
+Logs: `/var/log/nginx/massman_access.log`, `/var/log/nginx/massman_error.log`.
+
+## HAProxy and DNS
+
+On the edge box (`10.10.13.1`), add `mass.partridgecrossing.org` the same way as `finance.partridgecrossing.org`: HTTPS frontend, backend to ptx-web02 port 80, `Host` preserved. Point DNS at that VIP.
+
+## Updates
+
+```bash
+export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$PATH"
+cd ~/mass-man
+git pull
+npm ci
+npx prisma migrate deploy
+npm run build
+pm2 restart mass-man
+```
+
+Keep `.env` untracked. If you replace the directory, copy `.env` aside first.
+
+## systemd instead of PM2
+
+```bash
+pm2 delete mass-man
+pm2 save
 sudo cp deploy/mass-man.service /etc/systemd/system/mass-man.service
-# edit WorkingDirectory / EnvironmentFile if needed
 sudo systemctl daemon-reload
 sudo systemctl enable --now mass-man
 ```
 
-5. Reverse-proxy with nginx using `deploy/nginx.conf`.
+Edit `WorkingDirectory`, `EnvironmentFile`, and `PATH` in the unit if the install path or Node version changes.
 
-The app listens on `127.0.0.1:3004` (`PORT` in `.env`). There is no PM2 or Socket.IO.
+## Keycloak
 
-See [documents/KEYCLOAK.md](documents/KEYCLOAK.md) for SSO.
+Optional. Credentials work with `KEYCLOAK_*` unset. See [KEYCLOAK.md](KEYCLOAK.md).
