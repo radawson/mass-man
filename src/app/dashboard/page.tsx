@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import TrendChart from '@/components/TrendChart'
+import StepsBarChart from '@/components/StepsBarChart'
 
 type Dashboard = {
   units: { weight: string; length: string; system: string }
@@ -20,7 +21,7 @@ type Dashboard = {
     measurementDays: number
     goalStatus: string
   }
-  chart: { date: string; weight: string | null; bodyFat: string | null }[]
+  chart: { date: string; weight: string | null; bodyFat: string | null; steps: number | null }[]
   comparison: {
     metric: string
     start: string | null
@@ -139,6 +140,11 @@ export default function DashboardPage() {
               </tbody>
             </table>
           </div>
+        </div>
+
+        <div className="card">
+          <h2 className="font-semibold mb-2">Steps per day</h2>
+          <StepsBarChart points={data?.chart ?? []} />
         </div>
       </main>
     </>

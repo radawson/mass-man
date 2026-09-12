@@ -14,17 +14,14 @@ function numbers(points: Point[], key: 'weight' | 'bodyFat'): number[] {
 }
 
 function scaleY(values: number[], padTop: number, innerH: number) {
-  const min = Math.min(...values)
-  const max = Math.max(...values)
-  const pad = (max - min) * 0.12 || Math.max(Math.abs(max) * 0.05, 1)
-  const lo = min - pad
-  const hi = max + pad
-  const span = hi - lo || 1
+  const max = Math.max(...values, 0)
+  const hi = max === 0 ? 1 : max * 1.08
+  const span = hi || 1
   return {
-    lo,
+    lo: 0,
     hi,
-    y: (value: number) => padTop + innerH - ((value - lo) / span) * innerH,
-    ticks: [0, 0.25, 0.5, 0.75, 1].map((t) => lo + span * t),
+    y: (value: number) => padTop + innerH - (value / span) * innerH,
+    ticks: [0, 0.25, 0.5, 0.75, 1].map((t) => span * t),
   }
 }
 

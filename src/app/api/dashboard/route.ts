@@ -169,6 +169,7 @@ export async function GET() {
       date: day.date,
       weight: day.avgWeight,
       bodyFat: day.avgBodyFatPercent,
+      steps: day.steps,
     })),
     comparison,
     goals: goalViews,
