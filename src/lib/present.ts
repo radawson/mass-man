@@ -73,6 +73,7 @@ export function presentUser(user: User) {
       : null,
     sex: user.sex,
     bodyFatSource: user.bodyFatSource,
+    stepsGoal: user.stepsGoal,
     unitLabels: unitLabels(user.displayUnit),
   }
 }

@@ -13,6 +13,7 @@ type Me = {
   sex: 'MALE' | 'FEMALE' | null
   bodyFatSource: 'DEVICE' | 'ESTIMATED' | 'AUTO'
   heightDisplay: string | null
+  stepsGoal: number
 }
 
 const timeZones = [
@@ -36,7 +37,7 @@ export default function SettingsPage() {
         if (!res.ok) return
         const data = await res.json()
         if (!data?.name) return
-        setForm(data)
+        setForm({ ...data, stepsGoal: data.stepsGoal ?? 10000 })
         setHeight(data.heightDisplay ?? '')
       })
   }, [])
@@ -55,6 +56,7 @@ export default function SettingsPage() {
         sex: form.sex,
         bodyFatSource: form.bodyFatSource,
         height: height || null,
+        stepsGoal: form.stepsGoal,
       }),
     })
     if (!res.ok) {
@@ -114,6 +116,18 @@ export default function SettingsPage() {
               <option value="DEVICE">Device % only</option>
               <option value="ESTIMATED">Navy estimate only</option>
             </select>
+          </label>
+          <label className="block text-sm">
+            Daily step goal
+            <input
+              className="input mt-1"
+              type="number"
+              min={1}
+              max={250000}
+              step={500}
+              value={form.stepsGoal}
+              onChange={(e) => setForm({ ...form, stepsGoal: Number(e.target.value) || 10000 })}
+            />
           </label>
           <label className="block text-sm">
             Time zone

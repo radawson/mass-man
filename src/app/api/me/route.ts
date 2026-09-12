@@ -19,6 +19,7 @@ const patchSchema = z.object({
   sex: z.nativeEnum(Sex).nullable().optional(),
   bodyFatSource: z.nativeEnum(BodyFatSource).optional(),
   height: z.union([z.string(), z.number(), z.null()]).optional(),
+  stepsGoal: z.coerce.number().int().min(1).max(250000).optional(),
 })
 
 export async function GET() {
@@ -53,6 +54,7 @@ export async function PATCH(req: NextRequest) {
         sex: body.sex,
         bodyFatSource: body.bodyFatSource,
         heightCm,
+        stepsGoal: body.stepsGoal,
       },
     })
 

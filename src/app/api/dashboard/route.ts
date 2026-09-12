@@ -171,6 +171,7 @@ export async function GET() {
       bodyFat: day.avgBodyFatPercent,
       steps: day.steps,
     })),
+    stepsGoal: account.stepsGoal ?? 10000,
     comparison,
     goals: goalViews,
     latestDate: latest?.date ?? null,

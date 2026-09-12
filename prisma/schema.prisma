@@ -65,6 +65,7 @@ model User {
   heightCm       Decimal?         @db.Decimal(6, 2)
   sex            Sex?
   bodyFatSource  BodyFatSource    @default(AUTO)
+  stepsGoal      Int              @default(10000)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 

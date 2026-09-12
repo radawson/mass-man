@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import TrendChart from '@/components/TrendChart'
-import StepsBarChart from '@/components/StepsBarChart'
+import StepsBarChart, { DEFAULT_STEPS_GOAL } from '@/components/StepsBarChart'
 
 type Dashboard = {
   units: { weight: string; length: string; system: string }
@@ -22,6 +22,7 @@ type Dashboard = {
     goalStatus: string
   }
   chart: { date: string; weight: string | null; bodyFat: string | null; steps: number | null }[]
+  stepsGoal: number
   comparison: {
     metric: string
     start: string | null
@@ -44,6 +45,8 @@ const metricLabel: Record<string, string> = {
 export default function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null)
   const [loadError, setLoadError] = useState<string | null>(null)
+  const [stepsGoal, setStepsGoal] = useState(DEFAULT_STEPS_GOAL)
+  const [stepsGoalInput, setStepsGoalInput] = useState(String(DEFAULT_STEPS_GOAL))
 
   useEffect(() => {
     fetch('/api/dashboard')
@@ -55,6 +58,10 @@ export default function DashboardPage() {
         }
         setLoadError(null)
         setData(body)
+        if (typeof body.stepsGoal === 'number') {
+          setStepsGoal(body.stepsGoal)
+          setStepsGoalInput(String(body.stepsGoal))
+        }
       })
       .catch(() => setLoadError('Could not load dashboard.'))
   }, [])
@@ -75,6 +82,26 @@ export default function DashboardPage() {
         { label: 'Goal Status', value: k.goalStatus },
       ]
     : []
+
+  async function saveStepsGoal() {
+    const parsed = Number(stepsGoalInput)
+    if (!Number.isInteger(parsed) || parsed < 1 || parsed > 250000) {
+      setStepsGoalInput(String(stepsGoal))
+      return
+    }
+    if (parsed === stepsGoal) return
+    setStepsGoal(parsed)
+    const res = await fetch('/api/me', {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ stepsGoal: parsed }),
+    })
+    if (!res.ok) {
+      const previous = data?.stepsGoal ?? DEFAULT_STEPS_GOAL
+      setStepsGoal(previous)
+      setStepsGoalInput(String(previous))
+    }
+  }
 
   return (
     <>
@@ -143,8 +170,28 @@ export default function DashboardPage() {
         </div>
 
         <div className="card">
-          <h2 className="font-semibold mb-2">Steps per day</h2>
-          <StepsBarChart points={data?.chart ?? []} />
+          <div className="flex flex-wrap items-end justify-between gap-3 mb-2">
+            <h2 className="font-semibold">Steps per day</h2>
+            <label className="text-sm flex items-center gap-2">
+              Daily goal
+              <input
+                className="input w-28"
+                type="number"
+                min={1}
+                max={250000}
+                step={500}
+                value={stepsGoalInput}
+                onChange={(e) => setStepsGoalInput(e.target.value)}
+                onBlur={() => void saveStepsGoal()}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.currentTarget.blur()
+                  }
+                }}
+              />
+            </label>
+          </div>
+          <StepsBarChart points={data?.chart ?? []} goal={stepsGoal} />
         </div>
       </main>
     </>
