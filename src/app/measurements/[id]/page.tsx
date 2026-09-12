@@ -17,6 +17,7 @@ export default function EditMeasurementPage() {
           recordedAt: row.recordedAt,
           weight: row.weightDisplay ?? '',
           bodyFatPercentDevice: row.bodyFatPercentDevice ?? '',
+          steps: row.steps != null ? String(row.steps) : '',
           neck: row.neck ?? '',
           shoulders: row.shoulders ?? '',
           chest: row.chest ?? '',

@@ -1,39 +1,41 @@
 @import "tailwindcss";
 
 @theme {
-  --color-lime-accent: #c8f000;
-  --color-lime-accent-hover: #d4ff2a;
-  --color-lime-accent-muted: #9cbc00;
+  --color-primary: #1565c0;
+  --color-primary-hover: #0d47a1;
+  --color-primary-muted: #42a5f5;
 }
 
 :root {
-  --color-bg: #f4f5f0;
+  --color-bg: #f5f7fa;
   --color-surface: #ffffff;
-  --color-surface-2: #eceee6;
-  --color-border: #d5d8cc;
-  --color-text: #111111;
-  --color-muted: #5c6154;
-  --color-accent: #7a9600;
-  --color-accent-fg: #111111;
-  --color-danger: #dc2626;
-  --color-success: #16a34a;
-  --color-chart-weight: #7a9600;
-  --color-chart-waist: #444444;
+  --color-surface-2: #eceff1;
+  --color-border: #cfd8dc;
+  --color-text: #212121;
+  --color-muted: #546e7a;
+  --color-accent: #1565c0;
+  --color-accent-fg: #ffffff;
+  --color-danger: #c62828;
+  --color-success: #2e7d32;
+  --color-chart-weight: #1565c0;
+  --color-chart-bodyfat: #e65100;
+  --shadow-card: 0 1px 3px rgba(15, 23, 42, 0.12), 0 1px 2px rgba(15, 23, 42, 0.08);
 }
 
 html.dark {
-  --color-bg: #0a0a0a;
-  --color-surface: #161616;
-  --color-surface-2: #1f1f1f;
-  --color-border: #2e2e2e;
-  --color-text: #f5f5f5;
-  --color-muted: #a3a3a3;
-  --color-accent: #c8f000;
-  --color-accent-fg: #111111;
-  --color-danger: #f87171;
-  --color-success: #4ade80;
-  --color-chart-weight: #c8f000;
-  --color-chart-waist: #f5f5f5;
+  --color-bg: #121212;
+  --color-surface: #1c1f26;
+  --color-surface-2: #262b33;
+  --color-border: #3a4149;
+  --color-text: #e8eaed;
+  --color-muted: #9aa0a6;
+  --color-accent: #90caf9;
+  --color-accent-fg: #0a2540;
+  --color-danger: #ef9a9a;
+  --color-success: #81c784;
+  --color-chart-weight: #90caf9;
+  --color-chart-bodyfat: #ffb74d;
+  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.28);
 }
 
 @layer base {
@@ -45,7 +47,8 @@ html.dark {
 
 @layer components {
   .btn {
-    @apply px-4 py-2 rounded-lg font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    @apply px-4 py-2 rounded font-medium transition-colors duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2;
+    --tw-ring-color: var(--color-accent);
   }
 
   .btn-primary {
@@ -69,16 +72,18 @@ html.dark {
   }
 
   .input {
-    @apply w-full px-4 py-2 rounded-lg focus:outline-none focus:ring-2;
+    @apply w-full px-4 py-2 rounded focus:outline-none focus:ring-2;
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
     color: var(--color-text);
+    --tw-ring-color: var(--color-accent);
   }
 
   .card {
-    @apply rounded-lg p-6;
+    @apply rounded p-6;
     background-color: var(--color-surface);
     border: 1px solid var(--color-border);
+    box-shadow: var(--shadow-card);
   }
 
   .app-page-container {
@@ -90,13 +95,15 @@ html.dark {
   }
 
   .kpi-tile {
-    @apply rounded-lg p-4;
+    @apply rounded p-4;
     background-color: var(--color-surface);
-    border: 1px solid var(--color-accent);
+    border: 1px solid var(--color-border);
+    border-left: 3px solid var(--color-accent);
+    box-shadow: var(--shadow-card);
   }
 
   .table-wrap {
-    @apply w-full overflow-x-auto rounded-lg;
+    @apply w-full overflow-x-auto rounded;
     border: 1px solid var(--color-border);
   }
 }

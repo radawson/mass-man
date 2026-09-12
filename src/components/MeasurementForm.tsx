@@ -16,6 +16,7 @@ type Prefs = {
 const empty = {
   recordedAt: toDateTimeLocal(),
   weight: '',
+  steps: '',
   bodyFatPercentDevice: '',
   neck: '',
   shoulders: '',
@@ -85,9 +86,14 @@ export default function MeasurementForm({
     e.preventDefault()
     setSaving(true)
     try {
+      if (!form.weight.trim() && !form.steps.trim()) {
+        toast.error('Enter weight or steps')
+        return
+      }
       const payload = {
         recordedAt: new Date(form.recordedAt).toISOString(),
-        weight: form.weight,
+        weight: emptyToNull(form.weight),
+        steps: emptyToNull(form.steps),
         bodyFatPercentDevice: emptyToNull(form.bodyFatPercentDevice),
         neck: emptyToNull(form.neck),
         shoulders: emptyToNull(form.shoulders),
@@ -136,16 +142,23 @@ export default function MeasurementForm({
 
   return (
     <form onSubmit={onSubmit} className="space-y-6">
-      <div className="grid sm:grid-cols-2 gap-4">
+      <div className="grid sm:grid-cols-3 gap-4">
         <label className="block text-sm">
           <span className="mb-1 block" style={{ color: 'var(--color-muted)' }}>Date and time</span>
           <input className="input" type="datetime-local" required value={form.recordedAt} onChange={onChange('recordedAt')} />
         </label>
         <label className="block text-sm">
           <span className="mb-1 block" style={{ color: 'var(--color-muted)' }}>Weight ({w})</span>
-          <input className="input" type="number" step="0.1" required value={form.weight} onChange={onChange('weight')} />
+          <input className="input" type="number" step="0.1" value={form.weight} onChange={onChange('weight')} />
+        </label>
+        <label className="block text-sm">
+          <span className="mb-1 block" style={{ color: 'var(--color-muted)' }}>Steps</span>
+          <input className="input" type="number" step="1" min="0" value={form.steps} onChange={onChange('steps')} />
         </label>
       </div>
+      <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
+        Log weight, steps, or both. If you log steps more than once in a day, the latest count is the day’s total.
+      </p>
 
       <div className="card space-y-3">
         <h3 className="font-semibold">Body fat % (device)</h3>

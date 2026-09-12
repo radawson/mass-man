@@ -3,12 +3,13 @@ import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { presentMeasurement } from '@/lib/present'
 import { lengthToCanonical, optionalLengthToCanonical, weightToCanonical } from '@/lib/serialize'
-import { optionalDecimal, positiveDecimal } from '@/lib/zod-decimal'
+import { optionalDecimal, optionalSteps } from '@/lib/zod-decimal'
 import { z } from 'zod'
 
 const updateSchema = z.object({
   recordedAt: z.string().min(1).optional(),
-  weight: positiveDecimal.optional(),
+  weight: optionalDecimal,
+  steps: optionalSteps,
   bodyFatPercentDevice: optionalDecimal,
   neck: optionalDecimal,
   shoulders: optionalDecimal,
@@ -61,7 +62,13 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
       where: { id: existing.id },
       data: {
         recordedAt: body.recordedAt ? new Date(body.recordedAt) : undefined,
-        weightKg: body.weight ? weightToCanonical(body.weight, unit) : undefined,
+        weightKg:
+          body.weight === undefined
+            ? undefined
+            : body.weight
+              ? weightToCanonical(body.weight, unit)
+              : null,
+        steps: body.steps === undefined ? undefined : body.steps,
         bodyFatPercentDevice:
           body.bodyFatPercentDevice === undefined ? undefined : body.bodyFatPercentDevice ?? null,
         neckCm: body.neck === undefined ? undefined : optionalLengthToCanonical(body.neck, unit),

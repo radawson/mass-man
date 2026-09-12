@@ -56,12 +56,25 @@ const providers: NextAuthOptions['providers'] = [
   }),
 ]
 
+function keycloakCallbackUrl(): string | undefined {
+  const base = process.env.NEXTAUTH_URL?.replace(/\/$/, '')
+  if (!base) return undefined
+  return `${base}/api/auth/callback/keycloak`
+}
+
 if (keycloakConfigured()) {
+  const callbackUrl = keycloakCallbackUrl()
   providers.unshift(
     KeycloakProvider({
       clientId: process.env.KEYCLOAK_ID!,
       clientSecret: process.env.KEYCLOAK_SECRET!,
       issuer: process.env.KEYCLOAK_ISSUER!,
+      authorization: {
+        params: {
+          scope: 'openid email profile',
+          ...(callbackUrl ? { redirect_uri: callbackUrl } : {}),
+        },
+      },
       profile(profile) {
         const userRole = roleFromKeycloak(profile)
         return {
@@ -132,6 +145,15 @@ export const authOptions: AuthOptions = {
         session.user.isKeycloakUser = token.isKeycloakUser as boolean
       }
       return session
+    },
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      try {
+        if (new URL(url).origin === baseUrl) return url
+      } catch {
+        return baseUrl
+      }
+      return baseUrl
     },
   },
   pages: {

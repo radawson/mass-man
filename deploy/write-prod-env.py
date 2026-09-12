@@ -35,10 +35,10 @@ def main() -> None:
         'DEFAULT_ADMIN_PASSWORD="ChangeMe123!"',
         'DEFAULT_ADMIN_NAME="System Administrator"',
         "",
-        "# Keycloak: create client ptx-mass-man, then uncomment",
+        "# Keycloak OIDC — dedicated ptx-mass-man client. Do not copy finance KEYCLOAK_*.",
         '# KEYCLOAK_ID="ptx-mass-man"',
         "# KEYCLOAK_SECRET=",
-        f'# KEYCLOAK_ISSUER="{value(finance, "KEYCLOAK_ISSUER") or ""}"',
+        '# KEYCLOAK_ISSUER="https://logon.partridgecrossing.org/realms/ptx"',
         "",
     ]
     dest.write_text("\n".join(lines), encoding="utf-8")

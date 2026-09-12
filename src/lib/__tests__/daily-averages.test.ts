@@ -47,6 +47,28 @@ describe('daily averages', () => {
     expect(days[0].count).toBe(2)
   })
 
+  it('uses the latest step count of the day', () => {
+    const days = dailyAverages(
+      [
+        {
+          id: 'a',
+          recordedAt: new Date('2026-09-07T12:00:00.000Z'),
+          weightKg: '80',
+          steps: 4000,
+        },
+        {
+          id: 'b',
+          recordedAt: new Date('2026-09-07T22:00:00.000Z'),
+          steps: 9120,
+        },
+      ],
+      profile,
+    )
+    expect(days).toHaveLength(1)
+    expect(days[0].steps).toBe(9120)
+    expect(days[0].avgWeightKg?.toString()).toBe('80')
+  })
+
   it('splits readings on either side of midnight in America/New_York', () => {
     const days = dailyAverages(
       [

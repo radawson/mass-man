@@ -9,7 +9,8 @@ import { d, DecimalValue, mean } from './units'
 export type MeasurementForAverage = BodyFatInputs & {
   id: string
   recordedAt: Date
-  weightKg: DecimalValue
+  weightKg?: DecimalValue | null
+  steps?: number | null
   chestCm?: DecimalValue | null
   hipsCm?: DecimalValue | null
   leftUpperArmCm?: DecimalValue | null
@@ -39,10 +40,19 @@ export type DailyAverage = {
   avgUpperArmCm: Decimal | null
   avgThighCm: Decimal | null
   avgNeckCm: Decimal | null
+  steps: number | null
 }
 
 export function calendarDayKey(date: Date, timeZone: string): string {
   return format(date, 'yyyy-MM-dd', { in: tz(timeZone) })
+}
+
+function latestSteps(rows: MeasurementForAverage[]): number | null {
+  const withSteps = rows
+    .filter((row) => row.steps != null)
+    .sort((a, b) => a.recordedAt.getTime() - b.recordedAt.getTime())
+  const last = withSteps.at(-1)
+  return last?.steps ?? null
 }
 
 function collect(values: Array<DecimalValue | null | undefined>): Decimal[] {
@@ -73,7 +83,7 @@ export function dailyAverages(
         date,
         count: rows.length,
         measurementIds: rows.map((row) => row.id),
-        avgWeightKg: mean(rows.map((row) => row.weightKg)),
+        avgWeightKg: mean(collect(rows.map((row) => row.weightKg))),
         avgBodyFatPercent: mean(effectiveBf),
         avgWaistCm: mean(collect(rows.map((row) => row.waistCm))),
         avgChestCm: mean(collect(rows.map((row) => row.chestCm))),
@@ -87,6 +97,7 @@ export function dailyAverages(
         avgThighCm: mean(
           collect(rows.map((row) => bilateralAverage(row.leftThighCm, row.rightThighCm))),
         ),
+        steps: latestSteps(rows),
       }
     })
 }

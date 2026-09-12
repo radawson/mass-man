@@ -1,25 +1,16 @@
 # Keycloak setup for Mass Man
 
-Mass Man shows **Sign in with SSO** only when `KEYCLOAK_ID`, `KEYCLOAK_SECRET`, and `KEYCLOAK_ISSUER` are all set. Leave them unset for credentials-only (typical local Docker).
+Mass Man uses its **own** Keycloak client, `ptx-mass-man`. Do not reuse Kontado’s `ptx-finance` client, secret, or client roles.
 
-Issuer for this site: `https://logon.partridgecrossing.org/realms/ptx`.
+The login page shows **Sign in with SSO** only when `KEYCLOAK_ID`, `KEYCLOAK_SECRET`, and `KEYCLOAK_ISSUER` are all set. Leave them unset for credentials-only (typical local Docker).
 
-## Fast path (same client as Kontado)
+Issuer: `https://logon.partridgecrossing.org/realms/ptx`.
 
-Reuse `ptx-finance` so existing SSO users keep their roles. In Keycloak:
+NextAuth sends this OAuth callback (from `NEXTAUTH_URL`). It must be listed on **this** client:
 
-1. Clients → **ptx-finance** → Settings
-2. **Valid redirect URIs** — add:
-   `https://mass.partridgecrossing.org/api/auth/callback/keycloak`
-3. **Web origins** — add:
-   `https://mass.partridgecrossing.org`
-4. Save
+`https://mass.partridgecrossing.org/api/auth/callback/keycloak`
 
-Copy `KEYCLOAK_ID`, `KEYCLOAK_SECRET`, and `KEYCLOAK_ISSUER` from the finance `.env` into `/home/torvaldsl/mass-man/.env`, then `pm2 restart mass-man`.
-
-## Dedicated client (`ptx-mass-man`)
-
-Use this if Mass Man should have its own client roles.
+## Create client `ptx-mass-man`
 
 1. Clients → Create client
    - Client ID: `ptx-mass-man`
@@ -29,7 +20,7 @@ Use this if Mass Man should have its own client roles.
 2. Login settings:
    - Valid redirect URIs: `https://mass.partridgecrossing.org/api/auth/callback/keycloak`
    - Web origins: `https://mass.partridgecrossing.org`
-3. Credentials tab → copy the client secret into `.env`:
+3. Credentials tab → copy the client secret into `/home/torvaldsl/mass-man/.env` only:
 
 ```env
 KEYCLOAK_ID="ptx-mass-man"
@@ -37,15 +28,17 @@ KEYCLOAK_SECRET="paste-from-keycloak"
 KEYCLOAK_ISSUER="https://logon.partridgecrossing.org/realms/ptx"
 ```
 
-4. Client roles: create `USER`, `ADMIN`, and `GUEST` (same names as Kontado). Assign users under Users → Role mapping → Filter by clients → **ptx-mass-man**.
+Do not copy `KEYCLOAK_ID` or `KEYCLOAK_SECRET` from finance.
 
-Roles are read from `resource_access[clientId].roles` on the access token. Alternative admin names: `admin`, `administrator`, `it_admin`.
+4. Client roles: create `USER`, `ADMIN`, and `GUEST`. Assign users under Users → Role mapping → Filter by clients → **ptx-mass-man**.
+
+Roles are read from `resource_access[ptx-mass-man].roles` on the access token. Alternative admin names: `admin`, `administrator`, `it_admin`.
 
 ## After changing `.env`
 
 ```bash
 export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$PATH"
-pm2 restart mass-man
+pm2 restart mass-man --update-env
 curl -sS http://127.0.0.1:3004/api/auth/providers
 ```
 

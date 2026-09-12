@@ -14,7 +14,7 @@ Live site: `https://mass.partridgecrossing.org` (nginx on ptx-web02, HAProxy in 
 - Body-fat source: **device**, **US Navy estimate**, or **auto** (device if present, otherwise Navy)
 - Dashboard: KPI tiles, weight/waist trend, start-vs-current comparison, BMI and lean mass
 - Goals on weight, body fat, waist, chest, hips, upper arm, or thigh, with 25 / 50 / 75 / 100% milestones
-- Light, dark, and system themes (lime accent)
+- Light, dark, and system themes (navy Material accent)
 - Per-user units, timezone, height, and sex (sex + height required for the Navy estimate)
 
 ## Tech stack

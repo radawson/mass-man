@@ -65,7 +65,7 @@ export async function GET() {
   const presentedDays = days.map((day) => presentDailyAverage(day, account.displayUnit))
   const latest = presentedDays.at(-1)
   const first = presentedDays[0]
-  const chartDays = presentedDays.slice(-16)
+  const chartDays = presentedDays.slice(-90)
 
   const weightGoal = goals.find((g) => g.metric === GoalMetric.WEIGHT)
   const startWeight = weightGoal
@@ -158,6 +158,8 @@ export async function GET() {
           ? new Decimal(latest.avgWeight).minus(startWeight).toFixed(1)
           : null,
       bodyFatPercent: latest?.avgBodyFatPercent ?? null,
+      steps:
+        [...presentedDays].reverse().find((day) => day.steps != null)?.steps ?? null,
       waist: latest?.avgWaist ?? null,
       unitSystem: unitLabels(account.displayUnit).system,
       bmi: composition.bmi,
@@ -169,7 +171,7 @@ export async function GET() {
     chart: chartDays.map((day) => ({
       date: day.date,
       weight: day.avgWeight,
-      waist: day.avgWaist,
+      bodyFat: day.avgBodyFatPercent,
     })),
     comparison,
     goals: goalViews,

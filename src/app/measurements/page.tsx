@@ -9,12 +9,13 @@ import Navbar from '@/components/Navbar'
 type Row = {
   id: string
   recordedAt: string
-  weightDisplay: string
+  weightDisplay: string | null
   bodyFatPercentDevice: string | null
   bodyFatPercentEstimated: string | null
   bodyFatPercentEffective: string | null
   bodyFatSourceUsed: string | null
   waist: string | null
+  steps: number | null
 }
 
 export default function MeasurementsPage() {
@@ -57,6 +58,7 @@ export default function MeasurementsPage() {
               <tr style={{ color: 'var(--color-muted)' }}>
                 <th className="text-left p-3">When</th>
                 <th className="text-right p-3">Weight ({units.weight})</th>
+                <th className="text-right p-3">Steps</th>
                 <th className="text-right p-3">Device BF%</th>
                 <th className="text-right p-3">Navy BF%</th>
                 <th className="text-right p-3">Effective</th>
@@ -68,7 +70,8 @@ export default function MeasurementsPage() {
               {rows.map((row) => (
                 <tr key={row.id} className="border-t" style={{ borderColor: 'var(--color-border)' }}>
                   <td className="p-3">{new Date(row.recordedAt).toLocaleString()}</td>
-                  <td className="p-3 text-right">{row.weightDisplay}</td>
+                  <td className="p-3 text-right">{row.weightDisplay ?? '—'}</td>
+                  <td className="p-3 text-right">{row.steps != null ? row.steps.toLocaleString() : '—'}</td>
                   <td className="p-3 text-right">{row.bodyFatPercentDevice ?? '—'}</td>
                   <td className="p-3 text-right">{row.bodyFatPercentEstimated ?? '—'}</td>
                   <td className="p-3 text-right">
@@ -84,7 +87,7 @@ export default function MeasurementsPage() {
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td className="p-6 text-center" colSpan={7} style={{ color: 'var(--color-muted)' }}>
+                  <td className="p-6 text-center" colSpan={8} style={{ color: 'var(--color-muted)' }}>
                     No measurements yet.
                   </td>
                 </tr>

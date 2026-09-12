@@ -37,8 +37,9 @@ export function presentMeasurement(row: Measurement, user: UserProfile) {
     id: row.id,
     recordedAt: row.recordedAt.toISOString(),
     note: row.note,
-    weightKg: row.weightKg.toString(),
-    weightDisplay: weightFromCanonical(row.weightKg.toString(), unit),
+    weightKg: row.weightKg?.toString() ?? null,
+    weightDisplay: row.weightKg ? weightFromCanonical(row.weightKg.toString(), unit) : null,
+    steps: row.steps,
     bodyFatPercentDevice: n(row.bodyFatPercentDevice),
     bodyFatPercentEstimated: estimated ? decimalToString(estimated, 2) : null,
     bodyFatPercentEffective: effective.value ? decimalToString(effective.value, 2) : null,
@@ -86,7 +87,8 @@ export function toAverageInput(row: Measurement) {
   return {
     id: row.id,
     recordedAt: row.recordedAt,
-    weightKg: row.weightKg.toString(),
+    weightKg: row.weightKg?.toString() ?? null,
+    steps: row.steps,
     bodyFatPercentDevice: n(row.bodyFatPercentDevice),
     neckCm: n(row.neckCm),
     waistCm: n(row.waistCm),
@@ -127,6 +129,7 @@ export function presentDailyAverage(
     avgUpperArm: day.avgUpperArmCm ? lengthFromCanonical(day.avgUpperArmCm, unit) : null,
     avgThigh: day.avgThighCm ? lengthFromCanonical(day.avgThighCm, unit) : null,
     avgNeck: day.avgNeckCm ? lengthFromCanonical(day.avgNeckCm, unit) : null,
+    steps: day.steps,
   }
 }
 

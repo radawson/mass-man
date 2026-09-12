@@ -78,7 +78,8 @@ model Measurement {
   id                   String    @id @default(uuid())
   userId               String
   recordedAt           DateTime
-  weightKg             Decimal   @db.Decimal(8, 4)
+  weightKg             Decimal?  @db.Decimal(8, 4)
+  steps                Int?
   bodyFatPercentDevice Decimal?  @db.Decimal(5, 2)
   neckCm               Decimal?  @db.Decimal(6, 2)
   shouldersCm          Decimal?  @db.Decimal(6, 2)

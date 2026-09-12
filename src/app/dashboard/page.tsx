@@ -11,6 +11,7 @@ type Dashboard = {
     currentWeight: string | null
     weightChange: string | null
     bodyFatPercent: string | null
+    steps: number | null
     waist: string | null
     unitSystem: string
     bmi: string | null
@@ -19,7 +20,7 @@ type Dashboard = {
     measurementDays: number
     goalStatus: string
   }
-  chart: { date: string; weight: string | null; waist: string | null }[]
+  chart: { date: string; weight: string | null; bodyFat: string | null }[]
   comparison: {
     metric: string
     start: string | null
@@ -54,6 +55,7 @@ export default function DashboardPage() {
         { label: `Current Weight (${data.units.weight})`, value: k.currentWeight ?? '—' },
         { label: `Weight Change (${data.units.weight})`, value: k.weightChange ?? '—' },
         { label: 'Body Fat (%)', value: k.bodyFatPercent ?? '—' },
+        { label: 'Steps', value: k.steps != null ? k.steps.toLocaleString() : '—' },
         { label: `Waist (${data.units.length})`, value: k.waist ?? '—' },
         { label: 'Unit', value: k.unitSystem },
         { label: 'BMI', value: k.bmi ?? '—' },
@@ -87,11 +89,11 @@ export default function DashboardPage() {
 
         <div className="grid lg:grid-cols-5 gap-4">
           <div className="card lg:col-span-3">
-            <h2 className="font-semibold mb-2">Weight and waist — last {data?.chart.length ?? 0} days</h2>
+            <h2 className="font-semibold mb-2">Weight and body fat</h2>
             <TrendChart
               points={data?.chart ?? []}
               weightLabel={`Weight (${data?.units.weight ?? 'lb'})`}
-              waistLabel={`Waist (${data?.units.length ?? 'in'})`}
+              bodyFatLabel="Body fat (%)"
             />
           </div>
           <div className="card lg:col-span-2 overflow-x-auto">

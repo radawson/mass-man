@@ -3,26 +3,34 @@ import { prisma } from '@/lib/prisma'
 import { requireUser } from '@/lib/session'
 import { presentMeasurement } from '@/lib/present'
 import { lengthToCanonical, optionalLengthToCanonical, weightToCanonical } from '@/lib/serialize'
-import { optionalDecimal, positiveDecimal } from '@/lib/zod-decimal'
+import { optionalDecimal, optionalSteps } from '@/lib/zod-decimal'
 import { z } from 'zod'
 
-const createSchema = z.object({
-  recordedAt: z.string().min(1),
-  weight: positiveDecimal,
-  bodyFatPercentDevice: optionalDecimal,
-  neck: optionalDecimal,
-  shoulders: optionalDecimal,
-  chest: optionalDecimal,
-  waist: optionalDecimal,
-  hips: optionalDecimal,
-  leftUpperArm: optionalDecimal,
-  rightUpperArm: optionalDecimal,
-  leftThigh: optionalDecimal,
-  rightThigh: optionalDecimal,
-  leftCalf: optionalDecimal,
-  rightCalf: optionalDecimal,
-  note: z.string().nullable().optional(),
-})
+const createSchema = z
+  .object({
+    recordedAt: z.string().min(1),
+    weight: optionalDecimal,
+    steps: optionalSteps,
+    bodyFatPercentDevice: optionalDecimal,
+    neck: optionalDecimal,
+    shoulders: optionalDecimal,
+    chest: optionalDecimal,
+    waist: optionalDecimal,
+    hips: optionalDecimal,
+    leftUpperArm: optionalDecimal,
+    rightUpperArm: optionalDecimal,
+    leftThigh: optionalDecimal,
+    rightThigh: optionalDecimal,
+    leftCalf: optionalDecimal,
+    rightCalf: optionalDecimal,
+    note: z.string().nullable().optional(),
+  })
+  .refine((data) => data.weight != null || data.steps != null, {
+    message: 'Enter weight or steps',
+  })
+  .refine((data) => data.weight == null || Number(data.weight) > 0, {
+    message: 'Weight must be a positive number',
+  })
 
 export async function GET() {
   const { user, error } = await requireUser()
@@ -53,7 +61,8 @@ export async function POST(req: NextRequest) {
       data: {
         userId: user.id,
         recordedAt: new Date(body.recordedAt),
-        weightKg: weightToCanonical(body.weight, unit),
+        weightKg: body.weight ? weightToCanonical(body.weight, unit) : null,
+        steps: body.steps ?? null,
         bodyFatPercentDevice: body.bodyFatPercentDevice ?? null,
         neckCm: optionalLengthToCanonical(body.neck, unit),
         shouldersCm: optionalLengthToCanonical(body.shoulders, unit),
