@@ -1,6 +1,6 @@
--- Isolate Mass Man from other apps in this cluster
-CREATE SCHEMA IF NOT EXISTS "massman";
-SET search_path TO massman;
+-- Mass Man tables live in the database named in DATABASE_URL (typically
+-- database "massman", schema public). Do not SET search_path here: that
+-- hides public._prisma_migrations and Prisma fails with P1014.
 
 -- CreateEnum
 CREATE TYPE "Role" AS ENUM ('USER', 'ADMIN', 'GUEST');

@@ -18,15 +18,15 @@ For local Docker Postgres and product behavior, see the [README](../README.md).
 
 ## Database
 
-Prefer a dedicated database named `massman` if the role can `CREATE DATABASE` (`deploy/create-db.py` is a helper).
-
-If that is denied, use a schema on an existing cluster:
+Prefer a dedicated database named `massman` (schema `public`). `DATABASE_URL` should look like:
 
 ```env
-DATABASE_URL="postgresql://USER:PASS@10.10.13.50:5433/kontado?schema=massman"
+DATABASE_URL="postgresql://massman:PASS@10.10.13.50:5433/massman?schema=public"
 ```
 
-The init migration creates schema `massman` and sets `search_path`. Do not migrate into `public` on a shared database.
+Do not `SET search_path` in migrations; that hides `public._prisma_migrations` and `prisma migrate deploy` fails with P1014.
+
+If you must share a cluster, use a schema on an existing database (`?schema=massman`) and keep Prisma’s migrations table in that same schema.
 
 Remote hosts enable SSL unless `DATABASE_SSL=false`.
 
