@@ -98,9 +98,14 @@ export const authOptions: AuthOptions = {
         user.role = userRole
 
         try {
-          const existingUser = await prisma.user.findUnique({
+          let existingUser = await prisma.user.findUnique({
             where: { id: user.id! },
           })
+          if (!existingUser && user.email) {
+            existingUser = await prisma.user.findUnique({
+              where: { email: user.email },
+            })
+          }
 
           if (!existingUser) {
             await prisma.user.create({
@@ -112,11 +117,17 @@ export const authOptions: AuthOptions = {
                 isKeycloakUser: true,
               },
             })
-          } else if (existingUser.role !== userRole) {
-            await prisma.user.update({
-              where: { id: user.id! },
-              data: { role: userRole },
-            })
+          } else {
+            user.id = existingUser.id
+            if (existingUser.role !== userRole || !existingUser.isKeycloakUser) {
+              await prisma.user.update({
+                where: { id: existingUser.id },
+                data: {
+                  role: userRole,
+                  isKeycloakUser: true,
+                },
+              })
+            }
           }
         } catch (error) {
           console.error('Error in Keycloak signIn callback:', error)
@@ -131,6 +142,9 @@ export const authOptions: AuthOptions = {
         token.role = user.role
         token.isKeycloakUser = user.isKeycloakUser
       }
+      if (!token.id && token.sub) {
+        token.id = token.sub
+      }
 
       if (account?.provider === 'keycloak') {
         token.role = roleFromKeycloak(profile, account.access_token, account.id_token)
@@ -140,7 +154,7 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
+        session.user.id = (token.id ?? token.sub) as string
         session.user.role = token.role as Role
         session.user.isKeycloakUser = token.isKeycloakUser as boolean
       }

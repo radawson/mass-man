@@ -1,15 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/session'
+import { requireAccount } from '@/lib/session'
 import { averageProfile, presentDailyAverage, toAverageInput } from '@/lib/present'
 import { dailyAverages } from '@/lib/daily-averages'
 
 export async function GET(req: NextRequest) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
-
-  const account = await prisma.user.findUnique({ where: { id: user.id } })
-  if (!account) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const { searchParams } = new URL(req.url)
   const from = searchParams.get('from')
@@ -17,7 +14,7 @@ export async function GET(req: NextRequest) {
 
   const rows = await prisma.measurement.findMany({
     where: {
-      userId: user.id,
+      userId: account.id,
       ...(from || to
         ? {
             recordedAt: {

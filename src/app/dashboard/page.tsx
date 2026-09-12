@@ -42,24 +42,33 @@ const metricLabel: Record<string, string> = {
 
 export default function DashboardPage() {
   const [data, setData] = useState<Dashboard | null>(null)
+  const [loadError, setLoadError] = useState<string | null>(null)
 
   useEffect(() => {
     fetch('/api/dashboard')
-      .then((res) => res.json())
-      .then(setData)
+      .then(async (res) => {
+        const body = await res.json().catch(() => null)
+        if (!res.ok || !body?.units || !body?.kpis) {
+          setLoadError(res.status === 401 ? 'Please sign in again.' : 'Could not load dashboard.')
+          return
+        }
+        setLoadError(null)
+        setData(body)
+      })
+      .catch(() => setLoadError('Could not load dashboard.'))
   }, [])
 
   const k = data?.kpis
   const tiles = k
     ? [
-        { label: `Current Weight (${data.units.weight})`, value: k.currentWeight ?? '—' },
-        { label: `Weight Change (${data.units.weight})`, value: k.weightChange ?? '—' },
+        { label: `Current Weight (${data?.units?.weight ?? 'lb'})`, value: k.currentWeight ?? '—' },
+        { label: `Weight Change (${data?.units?.weight ?? 'lb'})`, value: k.weightChange ?? '—' },
         { label: 'Body Fat (%)', value: k.bodyFatPercent ?? '—' },
         { label: 'Steps', value: k.steps != null ? k.steps.toLocaleString() : '—' },
-        { label: `Waist (${data.units.length})`, value: k.waist ?? '—' },
+        { label: `Waist (${data?.units?.length ?? 'in'})`, value: k.waist ?? '—' },
         { label: 'Unit', value: k.unitSystem },
         { label: 'BMI', value: k.bmi ?? '—' },
-        { label: `Lean Mass (${data.units.weight})`, value: k.leanMass ?? '—' },
+        { label: `Lean Mass (${data?.units?.weight ?? 'lb'})`, value: k.leanMass ?? '—' },
         { label: 'Overall Progress', value: k.overallProgress != null ? `${k.overallProgress}%` : '—' },
         { label: 'Measurements', value: String(k.measurementDays) },
         { label: 'Goal Status', value: k.goalStatus },
@@ -78,6 +87,12 @@ export default function DashboardPage() {
           <Link href="/measurements/new" className="btn btn-primary">Log measurement</Link>
         </div>
 
+        {loadError && (
+          <div className="card" style={{ color: 'var(--color-danger)' }}>
+            {loadError}
+          </div>
+        )}
+
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
           {tiles.map((tile) => (
             <div key={tile.label} className="kpi-tile">
@@ -92,7 +107,7 @@ export default function DashboardPage() {
             <h2 className="font-semibold mb-2">Weight and body fat</h2>
             <TrendChart
               points={data?.chart ?? []}
-              weightLabel={`Weight (${data?.units.weight ?? 'lb'})`}
+              weightLabel={`Weight (${data?.units?.weight ?? 'lb'})`}
               bodyFatLabel="Body fat (%)"
             />
           </div>

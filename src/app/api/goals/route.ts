@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/session'
+import { requireAccount } from '@/lib/session'
 import { GoalDirection, GoalMetric } from '@/generated/prisma/client'
 import { lengthToCanonical, weightToCanonical } from '@/lib/serialize'
 import { decimalString } from '@/lib/zod-decimal'
@@ -24,29 +24,27 @@ function canonicalGoalValue(metric: GoalMetric, value: string, displayUnit: 'MET
 }
 
 export async function GET() {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
 
   const goals = await prisma.goal.findMany({
-    where: { userId: user.id },
+    where: { userId: account.id },
     orderBy: { metric: 'asc' },
   })
   return NextResponse.json(goals)
 }
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
 
   try {
     const body = goalSchema.parse(await req.json())
-    const account = await prisma.user.findUnique({ where: { id: user.id } })
-    if (!account) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const goal = await prisma.goal.upsert({
-      where: { userId_metric: { userId: user.id, metric: body.metric } },
+      where: { userId_metric: { userId: account.id, metric: body.metric } },
       create: {
-        userId: user.id,
+        userId: account.id,
         metric: body.metric,
         direction: body.direction,
         startValue: canonicalGoalValue(body.metric, body.startValue, account.displayUnit),

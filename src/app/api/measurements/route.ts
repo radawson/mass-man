@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/session'
+import { requireAccount } from '@/lib/session'
 import { presentMeasurement } from '@/lib/present'
 import { lengthToCanonical, optionalLengthToCanonical, weightToCanonical } from '@/lib/serialize'
 import { optionalDecimal, optionalSteps } from '@/lib/zod-decimal'
@@ -33,14 +33,11 @@ const createSchema = z
   })
 
 export async function GET() {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
 
-  const account = await prisma.user.findUnique({ where: { id: user.id } })
-  if (!account) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
   const rows = await prisma.measurement.findMany({
-    where: { userId: user.id },
+    where: { userId: account.id },
     orderBy: { recordedAt: 'desc' },
   })
 
@@ -48,18 +45,16 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
 
   try {
     const body = createSchema.parse(await req.json())
-    const account = await prisma.user.findUnique({ where: { id: user.id } })
-    if (!account) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const unit = account.displayUnit
     const row = await prisma.measurement.create({
       data: {
-        userId: user.id,
+        userId: account.id,
         recordedAt: new Date(body.recordedAt),
         weightKg: body.weight ? weightToCanonical(body.weight, unit) : null,
         steps: body.steps ?? null,

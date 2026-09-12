@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/session'
+import { requireAccount } from '@/lib/session'
 import { dailyAverages } from '@/lib/daily-averages'
 import { goalProgress, overallProgress, overallStatus } from '@/lib/goals'
 import {
@@ -47,18 +47,15 @@ function displayGoalValue(metric: GoalMetric, canonical: string, unit: UnitSyste
 }
 
 export async function GET() {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
-
-  const account = await prisma.user.findUnique({ where: { id: user.id } })
-  if (!account) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   const [rows, goals] = await Promise.all([
     prisma.measurement.findMany({
-      where: { userId: user.id },
+      where: { userId: account.id },
       orderBy: { recordedAt: 'asc' },
     }),
-    prisma.goal.findMany({ where: { userId: user.id } }),
+    prisma.goal.findMany({ where: { userId: account.id } }),
   ])
 
   const days = dailyAverages(rows.map(toAverageInput), averageProfile(account))

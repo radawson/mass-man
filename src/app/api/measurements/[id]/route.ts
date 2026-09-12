@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/session'
+import { requireAccount } from '@/lib/session'
 import { presentMeasurement } from '@/lib/present'
 import { lengthToCanonical, optionalLengthToCanonical, weightToCanonical } from '@/lib/serialize'
 import { optionalDecimal, optionalSteps } from '@/lib/zod-decimal'
@@ -28,32 +28,27 @@ const updateSchema = z.object({
 type RouteContext = { params: Promise<{ id: string }> }
 
 export async function GET(_req: NextRequest, context: RouteContext) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
   const { id } = await context.params
 
-  const account = await prisma.user.findUnique({ where: { id: user.id } })
-  if (!account) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-
   const row = await prisma.measurement.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: account.id },
   })
   if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 })
   return NextResponse.json(presentMeasurement(row, account))
 }
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
   const { id } = await context.params
 
   try {
     const body = updateSchema.parse(await req.json())
-    const account = await prisma.user.findUnique({ where: { id: user.id } })
-    if (!account) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const existing = await prisma.measurement.findFirst({
-      where: { id, userId: user.id },
+      where: { id, userId: account.id },
     })
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
@@ -110,12 +105,12 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(_req: NextRequest, context: RouteContext) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
   const { id } = await context.params
 
   const existing = await prisma.measurement.findFirst({
-    where: { id, userId: user.id },
+    where: { id, userId: account.id },
   })
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 

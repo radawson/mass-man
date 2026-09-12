@@ -32,8 +32,10 @@ export default function SettingsPage() {
 
   useEffect(() => {
     fetch('/api/me')
-      .then((res) => res.json())
-      .then((data) => {
+      .then(async (res) => {
+        if (!res.ok) return
+        const data = await res.json()
+        if (!data?.name) return
         setForm(data)
         setHeight(data.heightDisplay ?? '')
       })

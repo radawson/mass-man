@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/session'
+import { requireAccount } from '@/lib/session'
 import { GoalDirection, GoalMetric, Prisma } from '@/generated/prisma/client'
 import { lengthToCanonical, weightToCanonical } from '@/lib/serialize'
 import { decimalString } from '@/lib/zod-decimal'
@@ -23,16 +23,14 @@ function canonicalGoalValue(metric: GoalMetric, value: string, displayUnit: 'MET
 type RouteContext = { params: Promise<{ id: string }> }
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
   const { id } = await context.params
 
   try {
     const body = patchSchema.parse(await req.json())
-    const account = await prisma.user.findUnique({ where: { id: user.id } })
-    if (!account) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
-    const existing = await prisma.goal.findFirst({ where: { id, userId: user.id } })
+    const existing = await prisma.goal.findFirst({ where: { id, userId: account.id } })
     if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
     const updated = await prisma.goal.update({
@@ -65,11 +63,11 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
 }
 
 export async function DELETE(_req: NextRequest, context: RouteContext) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
   const { id } = await context.params
 
-  const existing = await prisma.goal.findFirst({ where: { id, userId: user.id } })
+  const existing = await prisma.goal.findFirst({ where: { id, userId: account.id } })
   if (!existing) return NextResponse.json({ error: 'Not found' }, { status: 404 })
 
   await prisma.goal.delete({ where: { id: existing.id } })

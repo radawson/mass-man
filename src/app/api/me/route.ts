@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireUser } from '@/lib/session'
+import { requireAccount } from '@/lib/session'
 import { presentUser } from '@/lib/present'
 import { lengthToCanonical } from '@/lib/serialize'
 import { z } from 'zod'
@@ -22,22 +22,18 @@ const patchSchema = z.object({
 })
 
 export async function GET() {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
-
-  const row = await prisma.user.findUnique({ where: { id: user.id } })
-  if (!row) return NextResponse.json({ error: 'Not found' }, { status: 404 })
-  return NextResponse.json(presentUser(row))
+  return NextResponse.json(presentUser(account))
 }
 
 export async function PATCH(req: NextRequest) {
-  const { user, error } = await requireUser()
+  const { account, error } = await requireAccount()
   if (error) return error
 
   try {
     const body = patchSchema.parse(await req.json())
-    const current = await prisma.user.findUnique({ where: { id: user.id } })
-    if (!current) return NextResponse.json({ error: 'Not found' }, { status: 404 })
+    const current = account
 
     const unit = body.displayUnit ?? current.displayUnit
     const heightCm =
@@ -48,7 +44,7 @@ export async function PATCH(req: NextRequest) {
           : lengthToCanonical(String(body.height), unit)
 
     const updated = await prisma.user.update({
-      where: { id: user.id },
+      where: { id: account.id },
       data: {
         name: body.name,
         displayUnit: body.displayUnit,

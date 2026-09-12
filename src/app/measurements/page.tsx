@@ -28,8 +28,8 @@ export default function MeasurementsPage() {
       fetch('/api/measurements').then((r) => r.json()),
       fetch('/api/me').then((r) => r.json()),
     ]).then(([list, me]) => {
-      setRows(list)
-      setUnits(me.unitLabels)
+      if (Array.isArray(list)) setRows(list)
+      if (me?.unitLabels) setUnits(me.unitLabels)
     })
   }, [])
 
