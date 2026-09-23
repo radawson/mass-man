@@ -181,8 +181,7 @@ export default function DashboardPage() {
                 className="input w-28"
                 type="number"
                 min={1}
-                max={250000}
-                step={500}
+                step={1}
                 value={stepsGoalInput}
                 onChange={(e) => setStepsGoalInput(e.target.value)}
                 onBlur={() => void saveStepsGoal()}

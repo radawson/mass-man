@@ -145,8 +145,8 @@ export default function SettingsPage() {
               className="input mt-1"
               type="number"
               min={1}
-              max={250000}
-              step={500}
+
+              step={1}
               value={form.stepsGoal}
               onChange={(e) => setForm({ ...form, stepsGoal: Number(e.target.value) || 10000 })}
             />
