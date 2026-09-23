@@ -1,6 +1,6 @@
-# Keycloak setup for Mass Man
+# Keycloak setup for Mezurilo
 
-Mass Man uses its **own** Keycloak client, `ptx-mass-man`. Do not reuse Kontado’s `ptx-finance` client, secret, or client roles.
+Mezurilo uses its **own** Keycloak client, `ptx-mass-man`. Do not reuse Kontado’s `ptx-finance` client, secret, or client roles.
 
 The login page shows **Sign in with SSO** only when `KEYCLOAK_ID`, `KEYCLOAK_SECRET`, and `KEYCLOAK_ISSUER` are all set. Leave them unset for credentials-only (typical local Docker).
 

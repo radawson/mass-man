@@ -20,6 +20,9 @@ const patchSchema = z.object({
   bodyFatSource: z.nativeEnum(BodyFatSource).optional(),
   height: z.union([z.string(), z.number(), z.null()]).optional(),
   stepsGoal: z.coerce.number().int().min(1).max(250000).optional(),
+  dateOfBirth: z
+    .union([z.string().regex(/^\d{4}-\d{2}-\d{2}$/), z.literal(''), z.null()])
+    .optional(),
 })
 
 export async function GET() {
@@ -55,6 +58,12 @@ export async function PATCH(req: NextRequest) {
         bodyFatSource: body.bodyFatSource,
         heightCm,
         stepsGoal: body.stepsGoal,
+        dateOfBirth:
+          body.dateOfBirth === undefined
+            ? undefined
+            : body.dateOfBirth
+              ? new Date(`${body.dateOfBirth}T00:00:00.000Z`)
+              : null,
       },
     })
 

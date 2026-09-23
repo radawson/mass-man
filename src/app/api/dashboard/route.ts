@@ -12,6 +12,8 @@ import {
   unitLabels,
 } from '@/lib/present'
 import { lengthFromCanonical, weightFromCanonical } from '@/lib/serialize'
+import { ageInYears } from '@/lib/age'
+import { heartRateZones, maxHeartRate } from '@/lib/heart-rate'
 import { GoalMetric, UnitSystem } from '@/generated/prisma/client'
 import Decimal from 'decimal.js'
 
@@ -72,7 +74,7 @@ export async function GET() {
   const heightCm = account.heightCm?.toString() ?? null
   const composition = latest?.avgWeightKg
     ? compositionFor(latest.avgWeightKg, latest.avgBodyFatPercent, heightCm)
-    : { bmi: null, fatMassKg: null, leanMassKg: null }
+    : { bmi: null, bmiCategory: null, fatMassKg: null, leanMassKg: null }
 
   const leanDisplay = composition.leanMassKg
     ? weightFromCanonical(composition.leanMassKg, account.displayUnit)
@@ -160,6 +162,7 @@ export async function GET() {
       waist: latest?.avgWaist ?? null,
       unitSystem: unitLabels(account.displayUnit).system,
       bmi: composition.bmi,
+      bmiCategory: composition.bmiCategory,
       leanMass: leanDisplay,
       overallProgress: overall ? Number(overall.toFixed(0)) : null,
       measurementDays: presentedDays.length,
@@ -172,6 +175,11 @@ export async function GET() {
       steps: day.steps,
     })),
     stepsGoal: account.stepsGoal ?? 10000,
+    heartRate: (() => {
+      if (!account.dateOfBirth) return null
+      const age = ageInYears(account.dateOfBirth, account.timeZone)
+      return { age, max: maxHeartRate(age), zones: heartRateZones(age) }
+    })(),
     comparison,
     goals: goalViews,
     latestDate: latest?.date ?? null,

@@ -1,6 +1,6 @@
 # Production deployment
 
-Mass Man on ptx-web02 lives in `/home/torvaldsl/mass-man`, speaks HTTP on `127.0.0.1:3004`, and is reverse-proxied by nginx. HAProxy at `10.10.13.1` terminates TLS for `mass.partridgecrossing.org`.
+Mezurilo on ptx-web02 lives in `/home/torvaldsl/mass-man`, speaks HTTP on `127.0.0.1:3004`, and is reverse-proxied by nginx. HAProxy at `10.10.13.1` terminates TLS for `mass.partridgecrossing.org`.
 
 For local Docker Postgres and product behavior, see the [README](../README.md).
 

@@ -1,5 +1,5 @@
 [Unit]
-Description=Mass Man body tracking
+Description=Mezurilo body tracking
 After=network-online.target
 Wants=network-online.target
 

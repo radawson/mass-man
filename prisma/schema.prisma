@@ -66,6 +66,7 @@ model User {
   sex            Sex?
   bodyFatSource  BodyFatSource    @default(AUTO)
   stepsGoal      Int              @default(10000)
+  dateOfBirth    DateTime?        @db.Date
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
 
@@ -81,6 +82,11 @@ model Measurement {
   recordedAt           DateTime
   weightKg             Decimal?  @db.Decimal(8, 4)
   steps                Int?
+  heartRateBpm         Int?
+  systolic             Int?
+  diastolic            Int?
+  temperatureC         Decimal?  @db.Decimal(4, 2)
+  oxygenSaturation     Decimal?  @db.Decimal(4, 1)
   bodyFatPercentDevice Decimal?  @db.Decimal(5, 2)
   neckCm               Decimal?  @db.Decimal(6, 2)
   shouldersCm          Decimal?  @db.Decimal(6, 2)

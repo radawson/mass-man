@@ -34,3 +34,11 @@ export function cmToIn(cm: DecimalValue): Decimal {
 export function inToCm(inches: DecimalValue): Decimal {
   return d(inches).times(CM_PER_IN)
 }
+
+export function cToF(celsius: DecimalValue): Decimal {
+  return d(celsius).times(9).div(5).plus(32)
+}
+
+export function fToC(fahrenheit: DecimalValue): Decimal {
+  return d(fahrenheit).minus(32).times(5).div(9)
+}

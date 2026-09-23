@@ -5,6 +5,7 @@ import Link from 'next/link'
 import Navbar from '@/components/Navbar'
 import TrendChart from '@/components/TrendChart'
 import StepsBarChart, { DEFAULT_STEPS_GOAL } from '@/components/StepsBarChart'
+import HeartRateZoneChart from '@/components/HeartRateZoneChart'
 
 type Dashboard = {
   units: { weight: string; length: string; system: string }
@@ -16,6 +17,7 @@ type Dashboard = {
     waist: string | null
     unitSystem: string
     bmi: string | null
+    bmiCategory: string | null
     leanMass: string | null
     overallProgress: number | null
     measurementDays: number
@@ -23,6 +25,7 @@ type Dashboard = {
   }
   chart: { date: string; weight: string | null; bodyFat: string | null; steps: number | null }[]
   stepsGoal: number
+  heartRate: { age: number } | null
   comparison: {
     metric: string
     start: string | null
@@ -75,7 +78,7 @@ export default function DashboardPage() {
         { label: 'Steps', value: k.steps != null ? k.steps.toLocaleString() : '—' },
         { label: `Waist (${data?.units?.length ?? 'in'})`, value: k.waist ?? '—' },
         { label: 'Unit', value: k.unitSystem },
-        { label: 'BMI', value: k.bmi ?? '—' },
+        { label: 'BMI', value: k.bmi ? (k.bmiCategory ? `${k.bmi} · ${k.bmiCategory}` : k.bmi) : '—' },
         { label: `Lean Mass (${data?.units?.weight ?? 'lb'})`, value: k.leanMass ?? '—' },
         { label: 'Overall Progress', value: k.overallProgress != null ? `${k.overallProgress}%` : '—' },
         { label: 'Measurements', value: String(k.measurementDays) },
@@ -192,6 +195,11 @@ export default function DashboardPage() {
             </label>
           </div>
           <StepsBarChart points={data?.chart ?? []} goal={stepsGoal} />
+        </div>
+
+        <div className="card">
+          <h2 className="font-semibold mb-2">Training heart rate zones</h2>
+          <HeartRateZoneChart age={data?.heartRate?.age ?? null} />
         </div>
       </main>
     </>

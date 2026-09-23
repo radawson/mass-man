@@ -2,15 +2,26 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { requireAccount } from '@/lib/session'
 import { presentMeasurement } from '@/lib/present'
-import { lengthToCanonical, optionalLengthToCanonical, weightToCanonical } from '@/lib/serialize'
-import { optionalDecimal, optionalSteps } from '@/lib/zod-decimal'
+import { optionalLengthToCanonical, weightToCanonical } from '@/lib/serialize'
+import { storedTemperature } from '@/lib/vitals'
+import { optionalDecimal, optionalDiastolic, optionalHeartRate, optionalSteps, optionalSystolic } from '@/lib/zod-decimal'
 import { z } from 'zod'
+
+const optionalOxygen = optionalDecimal.refine(
+  (v) => v == null || (Number(v) >= 50 && Number(v) <= 100),
+  { message: 'Oxygen saturation must be between 50 and 100' },
+)
 
 const createSchema = z
   .object({
     recordedAt: z.string().min(1),
     weight: optionalDecimal,
     steps: optionalSteps,
+    heartRate: optionalHeartRate,
+    systolic: optionalSystolic,
+    diastolic: optionalDiastolic,
+    temperature: optionalDecimal,
+    oxygenSaturation: optionalOxygen,
     bodyFatPercentDevice: optionalDecimal,
     neck: optionalDecimal,
     shoulders: optionalDecimal,
@@ -25,9 +36,23 @@ const createSchema = z
     rightCalf: optionalDecimal,
     note: z.string().nullable().optional(),
   })
-  .refine((data) => data.weight != null || data.steps != null, {
-    message: 'Enter weight or steps',
+  .refine((data) => (data.systolic == null) === (data.diastolic == null), {
+    message: 'Enter both blood pressure numbers',
   })
+  .refine(
+    (data) => data.systolic == null || data.diastolic == null || data.systolic > data.diastolic,
+    { message: 'Systolic pressure must be higher than diastolic' },
+  )
+  .refine(
+    (data) =>
+      data.weight != null ||
+      data.steps != null ||
+      data.heartRate != null ||
+      data.systolic != null ||
+      data.temperature != null ||
+      data.oxygenSaturation != null,
+    { message: 'Enter weight, steps, or a vital' },
+  )
   .refine((data) => data.weight == null || Number(data.weight) > 0, {
     message: 'Weight must be a positive number',
   })
@@ -58,6 +83,11 @@ export async function POST(req: NextRequest) {
         recordedAt: new Date(body.recordedAt),
         weightKg: body.weight ? weightToCanonical(body.weight, unit) : null,
         steps: body.steps ?? null,
+        heartRateBpm: body.heartRate ?? null,
+        systolic: body.systolic ?? null,
+        diastolic: body.diastolic ?? null,
+        temperatureC: storedTemperature(body.temperature, unit) ?? null,
+        oxygenSaturation: body.oxygenSaturation ?? null,
         bodyFatPercentDevice: body.bodyFatPercentDevice ?? null,
         neckCm: optionalLengthToCanonical(body.neck, unit),
         shouldersCm: optionalLengthToCanonical(body.shoulders, unit),
@@ -77,7 +107,10 @@ export async function POST(req: NextRequest) {
     return NextResponse.json(presentMeasurement(row, account), { status: 201 })
   } catch (err) {
     if (err instanceof z.ZodError) {
-      return NextResponse.json({ error: 'Invalid input', details: err.issues }, { status: 400 })
+      return NextResponse.json({ error: err.issues[0]?.message ?? 'Invalid input', details: err.issues }, { status: 400 })
+    }
+    if (err instanceof RangeError) {
+      return NextResponse.json({ error: err.message }, { status: 400 })
     }
     console.error(err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })

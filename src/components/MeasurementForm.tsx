@@ -17,6 +17,11 @@ const empty = {
   recordedAt: toDateTimeLocal(),
   weight: '',
   steps: '',
+  heartRate: '',
+  systolic: '',
+  diastolic: '',
+  temperature: '',
+  oxygenSaturation: '',
   bodyFatPercentDevice: '',
   neck: '',
   shoulders: '',
@@ -40,6 +45,12 @@ function toDateTimeLocal(iso?: string) {
 
 function emptyToNull(value: string) {
   return value.trim() === '' ? null : value
+}
+
+function hasVital(form: { heartRate: string; systolic: string; diastolic: string; temperature: string; oxygenSaturation: string }) {
+  return [form.heartRate, form.systolic, form.diastolic, form.temperature, form.oxygenSaturation].some(
+    (value) => value.trim() !== '',
+  )
 }
 
 export default function MeasurementForm({
@@ -86,14 +97,23 @@ export default function MeasurementForm({
     e.preventDefault()
     setSaving(true)
     try {
-      if (!form.weight.trim() && !form.steps.trim()) {
-        toast.error('Enter weight or steps')
+      if (!form.weight.trim() && !form.steps.trim() && !hasVital(form)) {
+        toast.error('Enter weight, steps, or a vital')
+        return
+      }
+      if ((form.systolic.trim() === '') !== (form.diastolic.trim() === '')) {
+        toast.error('Enter both blood pressure numbers')
         return
       }
       const payload = {
         recordedAt: new Date(form.recordedAt).toISOString(),
         weight: emptyToNull(form.weight),
         steps: emptyToNull(form.steps),
+        heartRate: emptyToNull(form.heartRate),
+        systolic: emptyToNull(form.systolic),
+        diastolic: emptyToNull(form.diastolic),
+        temperature: emptyToNull(form.temperature),
+        oxygenSaturation: emptyToNull(form.oxygenSaturation),
         bodyFatPercentDevice: emptyToNull(form.bodyFatPercentDevice),
         neck: emptyToNull(form.neck),
         shoulders: emptyToNull(form.shoulders),
@@ -157,8 +177,34 @@ export default function MeasurementForm({
         </label>
       </div>
       <p className="text-sm" style={{ color: 'var(--color-muted)' }}>
-        Log weight, steps, or both. If you log steps more than once in a day, the latest count is the day’s total.
+        Log weight, steps, vitals, or any combination. If you log steps more than once in a day, the latest count is the day’s total.
       </p>
+
+      <div className="card space-y-4">
+        <h3 className="font-semibold">Vitals</h3>
+        <div className="grid sm:grid-cols-2 gap-4">
+          <label className="block text-sm">
+            <span className="mb-1 block" style={{ color: 'var(--color-muted)' }}>Heart rate (bpm)</span>
+            <input className="input" type="number" step="1" min="30" max="250" value={form.heartRate} onChange={onChange('heartRate')} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block" style={{ color: 'var(--color-muted)' }}>Temperature ({prefs?.displayUnit === 'METRIC' ? '°C' : '°F'})</span>
+            <input className="input" type="number" step="0.1" value={form.temperature} onChange={onChange('temperature')} />
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block" style={{ color: 'var(--color-muted)' }}>Blood pressure</span>
+            <span className="flex items-center gap-2">
+              <input className="input" type="number" step="1" placeholder="Systolic" value={form.systolic} onChange={onChange('systolic')} />
+              <span style={{ color: 'var(--color-muted)' }}>/</span>
+              <input className="input" type="number" step="1" placeholder="Diastolic" value={form.diastolic} onChange={onChange('diastolic')} />
+            </span>
+          </label>
+          <label className="block text-sm">
+            <span className="mb-1 block" style={{ color: 'var(--color-muted)' }}>Oxygen saturation (%)</span>
+            <input className="input" type="number" step="0.1" min="50" max="100" value={form.oxygenSaturation} onChange={onChange('oxygenSaturation')} />
+          </label>
+        </div>
+      </div>
 
       <div className="card space-y-3">
         <h3 className="font-semibold">Body fat % (device)</h3>

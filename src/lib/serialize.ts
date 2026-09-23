@@ -1,5 +1,5 @@
 import { UnitSystem } from '@/generated/prisma/client'
-import { cmToIn, d, DecimalValue, inToCm, kgToLb, lbToKg } from './units'
+import { cmToIn, cToF, d, DecimalValue, fToC, inToCm, kgToLb, lbToKg } from './units'
 
 export function weightToCanonical(value: string, unit: UnitSystem): string {
   return unit === UnitSystem.IMPERIAL ? lbToKg(value).toString() : d(value).toString()
@@ -15,6 +15,14 @@ export function weightFromCanonical(kg: DecimalValue, unit: UnitSystem, dp = 1):
 
 export function lengthFromCanonical(cm: DecimalValue, unit: UnitSystem, dp = 1): string {
   return unit === UnitSystem.IMPERIAL ? cmToIn(cm).toFixed(dp) : d(cm).toFixed(dp)
+}
+
+export function temperatureToCanonical(value: string, unit: UnitSystem): string {
+  return unit === UnitSystem.IMPERIAL ? fToC(value).toString() : d(value).toString()
+}
+
+export function temperatureFromCanonical(celsius: DecimalValue, unit: UnitSystem, dp = 1): string {
+  return unit === UnitSystem.IMPERIAL ? cToF(celsius).toFixed(dp) : d(celsius).toFixed(dp)
 }
 
 export function optionalLengthToCanonical(

@@ -1,4 +1,4 @@
-# Mass Man
+# Mezurilo
 
 Personal body-mass and composition tracker. Log weight, optional scale body-fat %, and tape measurements; the dashboard averages same-day readings, estimates body fat when you want it, and tracks goals.
 

@@ -16,6 +16,12 @@ type Row = {
   bodyFatSourceUsed: string | null
   waist: string | null
   steps: number | null
+  heartRateBpm: number | null
+  systolic: number | null
+  diastolic: number | null
+  temperatureDisplay: string | null
+  temperatureUnit: string
+  oxygenSaturation: string | null
 }
 
 export default function MeasurementsPage() {
@@ -50,7 +56,10 @@ export default function MeasurementsPage() {
       <main className="app-page-container space-y-4">
         <div className="flex justify-between items-center">
           <h1 className="text-3xl font-bold">Measurements</h1>
-          <Link href="/measurements/new" className="btn btn-primary">New</Link>
+          <div className="flex gap-2">
+            <Link href="/measurements/blood-pressure" className="btn btn-secondary">Blood pressure</Link>
+            <Link href="/measurements/new" className="btn btn-primary">New</Link>
+          </div>
         </div>
         <div className="table-wrap">
           <table className="w-full text-sm">
@@ -59,6 +68,10 @@ export default function MeasurementsPage() {
                 <th className="text-left p-3">When</th>
                 <th className="text-right p-3">Weight ({units.weight})</th>
                 <th className="text-right p-3">Steps</th>
+                <th className="text-right p-3">Heart rate</th>
+                <th className="text-right p-3">Blood pressure</th>
+                <th className="text-right p-3">Temp</th>
+                <th className="text-right p-3">O2</th>
                 <th className="text-right p-3">Device BF%</th>
                 <th className="text-right p-3">Navy BF%</th>
                 <th className="text-right p-3">Effective</th>
@@ -72,6 +85,14 @@ export default function MeasurementsPage() {
                   <td className="p-3">{new Date(row.recordedAt).toLocaleString()}</td>
                   <td className="p-3 text-right">{row.weightDisplay ?? '—'}</td>
                   <td className="p-3 text-right">{row.steps != null ? row.steps.toLocaleString() : '—'}</td>
+                  <td className="p-3 text-right">{row.heartRateBpm ?? '—'}</td>
+                  <td className="p-3 text-right">
+                    {row.systolic != null && row.diastolic != null ? `${row.systolic}/${row.diastolic}` : '—'}
+                  </td>
+                  <td className="p-3 text-right">
+                    {row.temperatureDisplay != null ? `${row.temperatureDisplay}${row.temperatureUnit}` : '—'}
+                  </td>
+                  <td className="p-3 text-right">{row.oxygenSaturation ?? '—'}</td>
                   <td className="p-3 text-right">{row.bodyFatPercentDevice ?? '—'}</td>
                   <td className="p-3 text-right">{row.bodyFatPercentEstimated ?? '—'}</td>
                   <td className="p-3 text-right">
@@ -87,7 +108,7 @@ export default function MeasurementsPage() {
               ))}
               {rows.length === 0 && (
                 <tr>
-                  <td className="p-6 text-center" colSpan={8} style={{ color: 'var(--color-muted)' }}>
+                  <td className="p-6 text-center" colSpan={12} style={{ color: 'var(--color-muted)' }}>
                     No measurements yet.
                   </td>
                 </tr>

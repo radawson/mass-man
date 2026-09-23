@@ -45,7 +45,10 @@ export default function LoginPage() {
     <div className="min-h-screen flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h1 className="text-center text-4xl font-bold" style={{ color: 'var(--color-accent)' }}>Mass Man</h1>
+          <h1 className="text-center text-4xl font-bold flex items-center justify-center gap-3" style={{ color: 'var(--color-accent)' }}>
+            <img src="/logo.png" alt="" className="h-10 w-10" />
+            Mezurilo
+          </h1>
           <h2 className="mt-4 text-center text-2xl font-semibold">Sign in</h2>
         </div>
         <div className="card space-y-6">

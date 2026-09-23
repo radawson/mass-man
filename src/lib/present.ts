@@ -7,8 +7,9 @@ import {
   User,
 } from '@/generated/prisma/client'
 import { effectiveBodyFatPercent, estimatedBodyFatPercent } from './body-fat'
-import { bmi, fatMassKg, leanMassKg } from './composition'
-import { lengthFromCanonical, weightFromCanonical } from './serialize'
+import { bmi, bmiCategory, fatMassKg, leanMassKg } from './composition'
+import { lengthFromCanonical, temperatureFromCanonical, weightFromCanonical } from './serialize'
+import { ageInYears } from './age'
 import { decimalToString } from './units'
 
 function n(value: { toString(): string } | null | undefined): string | null {
@@ -55,6 +56,14 @@ export function presentMeasurement(row: Measurement, user: UserProfile) {
     rightThigh: row.rightThighCm ? lengthFromCanonical(row.rightThighCm.toString(), unit) : null,
     leftCalf: row.leftCalfCm ? lengthFromCanonical(row.leftCalfCm.toString(), unit) : null,
     rightCalf: row.rightCalfCm ? lengthFromCanonical(row.rightCalfCm.toString(), unit) : null,
+    heartRateBpm: row.heartRateBpm,
+    systolic: row.systolic,
+    diastolic: row.diastolic,
+    temperatureDisplay: row.temperatureC
+      ? temperatureFromCanonical(row.temperatureC.toString(), unit)
+      : null,
+    temperatureUnit: unit === 'IMPERIAL' ? '°F' : '°C',
+    oxygenSaturation: n(row.oxygenSaturation),
   }
 }
 
@@ -74,6 +83,8 @@ export function presentUser(user: User) {
     sex: user.sex,
     bodyFatSource: user.bodyFatSource,
     stepsGoal: user.stepsGoal,
+    dateOfBirth: user.dateOfBirth ? user.dateOfBirth.toISOString().slice(0, 10) : null,
+    age: user.dateOfBirth ? ageInYears(user.dateOfBirth, user.timeZone) : null,
     unitLabels: unitLabels(user.displayUnit),
   }
 }
@@ -135,8 +146,10 @@ export function presentDailyAverage(
 }
 
 export function compositionFor(weightKg: string, bf: string | null, heightCm: string | null) {
+  const score = heightCm ? bmi(weightKg, heightCm) : null
   return {
-    bmi: heightCm ? bmi(weightKg, heightCm)?.toFixed(1) ?? null : null,
+    bmi: score ? score.toFixed(1) : null,
+    bmiCategory: score ? bmiCategory(score) : null,
     fatMassKg: bf ? fatMassKg(weightKg, bf).toFixed(1) : null,
     leanMassKg: bf ? leanMassKg(weightKg, bf).toFixed(1) : null,
   }

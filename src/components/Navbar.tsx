@@ -21,13 +21,14 @@ export default function Navbar() {
   ]
 
   return (
-    <nav className="border-b" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
+    <nav className="no-print border-b" style={{ backgroundColor: 'var(--color-surface)', borderColor: 'var(--color-border)' }}>
       <div className="app-nav-container">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center gap-8">
             <Link href="/dashboard" className="flex items-center gap-2">
               <Activity className="h-7 w-7" style={{ color: 'var(--color-accent)' }} />
-              <h1 className="text-xl font-bold" style={{ color: 'var(--color-accent)' }}>Mass Man</h1>
+              <img src="/logo.png" alt="" className="h-7 w-7" />
+              <h1 className="text-xl font-bold" style={{ color: 'var(--color-accent)' }}>Mezurilo</h1>
             </Link>
             <div className="flex gap-1">
               {links.map((link) => {

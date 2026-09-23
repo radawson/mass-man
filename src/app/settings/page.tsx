@@ -14,6 +14,8 @@ type Me = {
   bodyFatSource: 'DEVICE' | 'ESTIMATED' | 'AUTO'
   heightDisplay: string | null
   stepsGoal: number
+  dateOfBirth: string | null
+  age: number | null
 }
 
 const timeZones = [
@@ -37,7 +39,12 @@ export default function SettingsPage() {
         if (!res.ok) return
         const data = await res.json()
         if (!data?.name) return
-        setForm({ ...data, stepsGoal: data.stepsGoal ?? 10000 })
+        setForm({
+          ...data,
+          stepsGoal: data.stepsGoal ?? 10000,
+          dateOfBirth: data.dateOfBirth ?? null,
+          age: data.age ?? null,
+        })
         setHeight(data.heightDisplay ?? '')
       })
   }, [])
@@ -57,6 +64,7 @@ export default function SettingsPage() {
         bodyFatSource: form.bodyFatSource,
         height: height || null,
         stepsGoal: form.stepsGoal,
+        dateOfBirth: form.dateOfBirth || null,
       }),
     })
     if (!res.ok) {
@@ -96,6 +104,20 @@ export default function SettingsPage() {
           <label className="block text-sm">
             Height ({form.displayUnit === 'IMPERIAL' ? 'in' : 'cm'})
             <input className="input mt-1" value={height} onChange={(e) => setHeight(e.target.value)} />
+          </label>
+          <label className="block text-sm">
+            Date of birth
+            <input
+              className="input mt-1"
+              type="date"
+              value={form.dateOfBirth ?? ''}
+              onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value || null })}
+            />
+            {form.age != null && (
+              <span className="mt-1 block" style={{ color: 'var(--color-muted)' }}>
+                Age {form.age}
+              </span>
+            )}
           </label>
           <label className="block text-sm">
             Sex (for Navy body-fat estimate)

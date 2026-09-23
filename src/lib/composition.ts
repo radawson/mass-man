@@ -7,6 +7,14 @@ export function bmi(weightKg: DecimalValue, heightCm: DecimalValue): Decimal | n
   return d(weightKg).div(heightM.pow(2))
 }
 
+export function bmiCategory(value: DecimalValue): string {
+  const score = d(value)
+  if (score.lt(18.5)) return 'Underweight'
+  if (score.lt(25)) return 'Normal'
+  if (score.lt(30)) return 'Overweight'
+  return 'Obese'
+}
+
 export function fatMassKg(weightKg: DecimalValue, bodyFatPercent: DecimalValue): Decimal {
   return d(weightKg).times(d(bodyFatPercent).div(100))
 }
