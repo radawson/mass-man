@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAccount } from '@/lib/session'
+import { requireManagedAccount } from '@/lib/session'
 import { presentMeasurement } from '@/lib/present'
 import { lengthToCanonical, optionalLengthToCanonical, weightToCanonical } from '@/lib/serialize'
 import { storedTemperature } from '@/lib/vitals'
@@ -14,7 +14,7 @@ const optionalOxygen = optionalDecimal.refine(
 
 const updateSchema = z
   .object({
-    recordedAt: z.string().min(1).optional(),
+    recordedAt: z.string().datetime({ offset: true }).optional(),
     weight: optionalDecimal,
     steps: optionalSteps,
     heartRate: optionalHeartRate,
@@ -46,8 +46,8 @@ const updateSchema = z
 
 type RouteContext = { params: Promise<{ id: string }> }
 
-export async function GET(_req: NextRequest, context: RouteContext) {
-  const { account, error } = await requireAccount()
+export async function GET(req: NextRequest, context: RouteContext) {
+  const { account, error } = await requireManagedAccount(req)
   if (error) return error
   const { id } = await context.params
 
@@ -59,7 +59,7 @@ export async function GET(_req: NextRequest, context: RouteContext) {
 }
 
 export async function PATCH(req: NextRequest, context: RouteContext) {
-  const { account, error } = await requireAccount()
+  const { account, error } = await requireManagedAccount(req)
   if (error) return error
   const { id } = await context.params
 
@@ -132,8 +132,8 @@ export async function PATCH(req: NextRequest, context: RouteContext) {
   }
 }
 
-export async function DELETE(_req: NextRequest, context: RouteContext) {
-  const { account, error } = await requireAccount()
+export async function DELETE(req: NextRequest, context: RouteContext) {
+  const { account, error } = await requireManagedAccount(req)
   if (error) return error
   const { id } = await context.params
 

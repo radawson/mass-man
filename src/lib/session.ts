@@ -21,32 +21,7 @@ export async function requireUser() {
 }
 
 export async function resolveAccount(user: SessionUser): Promise<User | null> {
-  const byId = await prisma.user.findUnique({ where: { id: user.id } })
-  if (byId) return byId
-
-  if (user.email) {
-    const byEmail = await prisma.user.findUnique({ where: { email: user.email } })
-    if (byEmail) return byEmail
-  }
-
-  if (user.email) {
-    try {
-      return await prisma.user.create({
-        data: {
-          id: user.id,
-          email: user.email,
-          name: user.name || 'User',
-          role: user.role ?? Role.USER,
-          isKeycloakUser: user.isKeycloakUser ?? false,
-        },
-      })
-    } catch (error) {
-      console.error('Failed to provision session user', error)
-      return prisma.user.findUnique({ where: { email: user.email } })
-    }
-  }
-
-  return null
+  return prisma.user.findUnique({ where: { id: user.id } })
 }
 
 export async function requireAccount(): Promise<
@@ -61,5 +36,31 @@ export async function requireAccount(): Promise<
   if (!account) {
     return { account: null, error: NextResponse.json({ error: 'Not found' }, { status: 404 }) }
   }
+  if (!account.isActive) {
+    return { account: null, error: NextResponse.json({ error: 'Account is inactive' }, { status: 403 }) }
+  }
   return { account, error: null }
+}
+
+export async function requireAdmin() {
+  const result = await requireAccount()
+  if (result.error) return result
+  if (result.account.role !== Role.ADMIN) {
+    return { account: null, error: NextResponse.json({ error: 'Administrator access required' }, { status: 403 }) }
+  }
+  return result
+}
+
+/** Explicit target selection; authorization always uses the current database role. */
+export async function requireManagedAccount(req: Request) {
+  const result = await requireAccount()
+  if (result.error) return result
+  const targetId = new URL(req.url).searchParams.get('userId')
+  if (targetId === null || targetId === result.account.id) return result
+  if (result.account.role !== Role.ADMIN) {
+    return { account: null, error: NextResponse.json({ error: 'Administrator access required' }, { status: 403 }) }
+  }
+  const target = await prisma.user.findUnique({ where: { id: targetId } })
+  if (!target) return { account: null, error: NextResponse.json({ error: 'User not found' }, { status: 404 }) }
+  return { account: target, error: null }
 }

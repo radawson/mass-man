@@ -56,10 +56,15 @@ function hasVital(form: { heartRate: string; systolic: string; diastolic: string
 export default function MeasurementForm({
   measurementId,
   initial,
+  userId,
+  onSaved,
 }: {
+  userId?: string
+  onSaved?: () => void
   measurementId?: string
   initial?: Partial<typeof empty> & { recordedAt?: string }
 }) {
+  const query = userId ? `?userId=${encodeURIComponent(userId)}` : ''
   const router = useRouter()
   const [prefs, setPrefs] = useState<Prefs | null>(null)
   const [saving, setSaving] = useState(false)
@@ -69,11 +74,11 @@ export default function MeasurementForm({
   const [form, setForm] = useState({ ...empty, ...initial, recordedAt: toDateTimeLocal(initial?.recordedAt) })
 
   useEffect(() => {
-    fetch('/api/me')
-      .then((res) => res.json())
+    fetch(`/api/me${query}`)
+      .then((res) => { if (!res.ok) throw new Error('Preferences unavailable'); return res.json() })
       .then(setPrefs)
       .catch(() => toast.error('Could not load preferences'))
-  }, [])
+  }, [query])
 
   const estimate = useMemo(() => {
     if (!prefs?.sex || !prefs.heightCm || !form.neck || !form.waist) return null
@@ -129,7 +134,7 @@ export default function MeasurementForm({
         note: emptyToNull(form.note),
       }
       const url = measurementId ? `/api/measurements/${measurementId}` : '/api/measurements'
-      const res = await fetch(url, {
+      const res = await fetch(`${url}${query}`, {
         method: measurementId ? 'PATCH' : 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
@@ -140,8 +145,12 @@ export default function MeasurementForm({
         return
       }
       toast.success(measurementId ? 'Measurement updated' : 'Measurement logged')
-      router.push('/measurements')
-      router.refresh()
+      if (onSaved) { onSaved() } else {
+        router.push('/measurements')
+        router.refresh()
+      }
+    } catch {
+      toast.error('Could not save measurement')
     } finally {
       setSaving(false)
     }
@@ -256,7 +265,7 @@ export default function MeasurementForm({
         <textarea className="input" rows={3} value={form.note} onChange={onChange('note')} />
       </label>
 
-      <button type="submit" className="btn btn-primary" disabled={saving}>
+      <button type="submit" className="btn btn-primary" disabled={saving || !prefs}>
         {saving ? 'Saving…' : measurementId ? 'Save changes' : 'Save measurement'}
       </button>
     </form>

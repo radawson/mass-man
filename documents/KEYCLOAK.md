@@ -42,3 +42,9 @@ curl -sS http://127.0.0.1:3004/api/auth/providers
 ```
 
 You should see a `keycloak` provider. Reload `/login` and **Sign in with SSO** should appear.
+
+## Linking a household member created by an admin
+
+An admin can create a local profile from **Users** using the person's email before their first SSO login. Keycloak must supply `sub`, `email`, and `email_verified: true` through the `openid email profile` scopes. Use Keycloak's email verification flow or mark the known household member's email verified in the Keycloak user settings.
+
+The first verified email match attaches the Keycloak subject to the existing local user ID. Existing profile settings, goals, and measurements stay attached. Subsequent logins resolve by subject, so an email change does not create another profile. A conflicting email or a subject already linked to another person is rejected. Local passwords are cleared when linking, and the person's app role follows the Keycloak role mappings above.

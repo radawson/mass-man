@@ -5,6 +5,8 @@ import bcrypt from 'bcryptjs'
 import { prisma } from './prisma'
 import { Role } from '@/generated/prisma/client'
 import { resolveKeycloakRole } from './keycloak-roles'
+import { linkKeycloakAccount } from './keycloak-account'
+import { emailFilter } from './email'
 
 function roleFromKeycloak(profile: unknown, accessToken?: string | null, idToken?: string | null): Role {
   return resolveKeycloakRole({
@@ -32,8 +34,8 @@ const providers: NextAuthOptions['providers'] = [
         throw new Error('Invalid credentials')
       }
 
-      const user = await prisma.user.findUnique({
-        where: { email: credentials.email },
+      const user = await prisma.user.findFirst({
+        where: { email: emailFilter(credentials.email) },
       })
 
       if (!user || !user.password || user.isKeycloakUser || !user.isActive) {
@@ -98,37 +100,19 @@ export const authOptions: AuthOptions = {
         user.role = userRole
 
         try {
-          let existingUser = await prisma.user.findUnique({
-            where: { id: user.id! },
+          const claims = profile as { sub?: string; email?: string; email_verified?: boolean } | undefined
+          const linked = await linkKeycloakAccount({
+            subject: claims?.sub ?? account.providerAccountId,
+            email: claims?.email ?? user.email ?? '',
+            emailVerified: claims?.email_verified === true,
+            name: user.name || 'User',
+            role: userRole,
           })
-          if (!existingUser && user.email) {
-            existingUser = await prisma.user.findUnique({
-              where: { email: user.email },
-            })
-          }
-
-          if (!existingUser) {
-            await prisma.user.create({
-              data: {
-                id: user.id!,
-                email: user.email!,
-                name: user.name || 'User',
-                role: userRole,
-                isKeycloakUser: true,
-              },
-            })
-          } else {
-            user.id = existingUser.id
-            if (existingUser.role !== userRole || !existingUser.isKeycloakUser) {
-              await prisma.user.update({
-                where: { id: existingUser.id },
-                data: {
-                  role: userRole,
-                  isKeycloakUser: true,
-                },
-              })
-            }
-          }
+          user.id = linked.id
+          user.email = linked.email
+          user.name = linked.name
+          user.role = linked.role
+          user.isKeycloakUser = true
         } catch (error) {
           console.error('Error in Keycloak signIn callback:', error)
           return false

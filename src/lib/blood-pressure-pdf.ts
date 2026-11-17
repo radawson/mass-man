@@ -10,7 +10,7 @@ export type BloodPressureRow = {
   oxygenSaturation: string | null
 }
 
-export async function bloodPressurePdf(name: string, rows: BloodPressureRow[]): Promise<Uint8Array> {
+export async function bloodPressurePdf(name: string, rows: BloodPressureRow[], timeZone = 'UTC'): Promise<Uint8Array> {
   const doc = await PDFDocument.create()
   const font = await doc.embedFont(StandardFonts.Helvetica)
   const bold = await doc.embedFont(StandardFonts.HelveticaBold)
@@ -30,7 +30,7 @@ export async function bloodPressurePdf(name: string, rows: BloodPressureRow[]): 
     y -= 16
     page.drawText(name, { x: margin, y, size: 11, font })
     y -= 22
-    const headers = ['When', 'Blood pressure', 'Heart rate', 'Temperature', 'O2 sat']
+    const headers = [`When (${timeZone})`, 'Blood pressure', 'Heart rate', 'Temperature', 'O2 sat']
     let x = margin
     headers.forEach((header, i) => {
       page.drawText(header, { x, y, size: 9, font: bold })
@@ -59,6 +59,7 @@ export async function bloodPressurePdf(name: string, rows: BloodPressureRow[]): 
       drawHeader()
     }
     const when = new Date(row.recordedAt).toLocaleString('en-US', {
+      timeZone,
       year: 'numeric',
       month: 'short',
       day: 'numeric',

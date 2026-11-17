@@ -3,7 +3,7 @@
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { Activity, LayoutDashboard, LogOut, Moon, Plus, Settings, Sun, Target, Weight } from 'lucide-react'
+import { Activity, LayoutDashboard, LogOut, Moon, Plus, Settings, Sun, Target, Users, Weight } from 'lucide-react'
 import { useTheme } from './ThemeProvider'
 
 export default function Navbar() {
@@ -18,6 +18,7 @@ export default function Navbar() {
     { href: '/measurements', label: 'Log', icon: Weight },
     { href: '/goals', label: 'Goals', icon: Target },
     { href: '/settings', label: 'Settings', icon: Settings },
+    ...(session.user.role === 'ADMIN' ? [{ href: '/admin/users', label: 'Users', icon: Users }] : []),
   ]
 
   return (

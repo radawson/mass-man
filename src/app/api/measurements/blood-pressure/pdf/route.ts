@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAccount } from '@/lib/session'
+import { requireManagedAccount } from '@/lib/session'
 import { presentMeasurement } from '@/lib/present'
 import { bloodPressurePdf } from '@/lib/blood-pressure-pdf'
 
-export async function GET() {
-  const { account, error } = await requireAccount()
+export async function GET(req: Request) {
+  const { account, error } = await requireManagedAccount(req)
   if (error) return error
 
   const rows = await prisma.measurement.findMany({
@@ -27,6 +27,7 @@ export async function GET() {
         oxygenSaturation: presented.oxygenSaturation,
       }
     }),
+    account.timeZone,
   )
 
   return new NextResponse(Buffer.from(pdf), {

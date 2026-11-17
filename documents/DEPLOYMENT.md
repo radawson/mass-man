@@ -111,3 +111,16 @@ Edit `WorkingDirectory`, `EnvironmentFile`, and the nvm path in `ExecStart` if t
 ## Keycloak
 
 Optional. Credentials work with `KEYCLOAK_*` unset. See [KEYCLOAK.md](KEYCLOAK.md).
+
+## Admin-user / SSO-link migration
+
+Before applying `20261117170000_admin_users_sso_link`, check for existing case-variant duplicate emails in the app's database/schema:
+
+```sql
+SELECT LOWER(email), COUNT(*)
+FROM users
+GROUP BY LOWER(email)
+HAVING COUNT(*) > 1;
+```
+
+If this returns rows, resolve those duplicates explicitly before deployment; do not discard either person's measurements. The migration preserves all existing user IDs and adds a unique Keycloak subject plus case-insensitive email uniqueness. Apply migrations before starting the updated app. No Keycloak accounts or users are created by deployment.

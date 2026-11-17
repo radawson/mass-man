@@ -2,13 +2,15 @@
 
 Personal body-mass and composition tracker. Log weight, optional scale body-fat %, and tape measurements; the dashboard averages same-day readings, estimates body fat when you want it, and tracks goals.
 
-Each signed-in user sees only their own data. Measurements are stored as **kg** and **cm**; the UI can show **lb / in** or **kg / cm**.
+Regular users see only their own data. Administrators can create users and manage their profiles and measurements through **Users**. Measurements are stored as **kg** and **cm**; the UI can show **lb / in** or **kg / cm**.
 
 Live site: `https://mass.partridgecrossing.org` (nginx on ptx-web02, HAProxy in front).
 
 ## Features
 
 - Email/password accounts, optional Keycloak SSO
+- Admin user creation, profile editing, and measurement entry for other household members
+- Verified Keycloak email matching preserves an existing local profile and measurement history
 - Measurement log with selectable date/time: weight, device body-fat %, neck through calves, notes
 - Same-calendar-day readings (in the user’s timezone) collapsed to an arithmetic mean for charts and goals
 - Body-fat source: **device**, **US Navy estimate**, or **auto** (device if present, otherwise Navy)
@@ -179,7 +181,7 @@ mass-man/
 - **Measurement** — `recordedAt`, `weightKg`, optional device BF% and tape fields (cm)
 - **Goal** — one row per `(userId, metric)`
 
-Queries always filter `userId` from the session. Prisma client is generated to `src/generated/prisma/` (gitignored).
+Queries filter by the signed-in account by default. Profile and measurement APIs accept an explicit `userId` for administrators; the server checks the current database role before allowing access to another account. Prisma client is generated to `src/generated/prisma/` (gitignored).
 
 ## API
 
@@ -232,3 +234,13 @@ npx prisma studio
 
 - [Deployment](documents/DEPLOYMENT.md)
 - [Keycloak](documents/KEYCLOAK.md)
+
+## Managing household members
+
+Sign in as an **ADMIN**, choose **Users**, and create a person with their name and actual email address. The optional password enables local login; leave it blank if you will enter measurements for them until they use SSO. New people always start with the USER role.
+
+Open **Profile & measurements** to edit their profile, log blood pressure and heart rate (weight is optional), correct or delete readings, and print/download their blood-pressure report. The heading identifies whose data you are editing, and measurement values use that person's units. Measurement date/time entry uses your browser's local time; the history displays the person's time zone.
+
+On the first Keycloak login with a **verified** matching email (case-insensitive, ignoring surrounding whitespace on input), the existing user ID, profile, measurements, and goals are preserved. A permanent Keycloak subject link handles later email changes. Linking removes the old local password and SSO becomes the login method; roles follow Keycloak claims on SSO login. Disabled accounts cannot sign in, and an identity already linked to a different Keycloak subject cannot be reassigned automatically.
+
+Deploy this change with `npx prisma migrate deploy` before starting the new build. The migration adds `keycloakSubject` and a case-insensitive email uniqueness index. Existing case-variant duplicate emails must be resolved before applying it; the migration deliberately fails rather than guessing how to merge two existing histories. See [Keycloak setup](documents/KEYCLOAK.md) for email claims.

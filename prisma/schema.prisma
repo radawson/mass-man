@@ -58,6 +58,7 @@ model User {
   password       String?
   role           Role             @default(USER)
   isKeycloakUser Boolean          @default(false)
+  keycloakSubject String?         @unique
   isActive       Boolean          @default(true)
   displayUnit    UnitSystem       @default(IMPERIAL)
   theme          ThemePreference  @default(SYSTEM)

@@ -1,0 +1,188 @@
+'use client'
+
+import { FormEvent, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
+import { cmToIn, inToCm } from '@/lib/units'
+import { useTheme } from '@/components/ThemeProvider'
+
+type Me = {
+  name: string
+  displayUnit: 'METRIC' | 'IMPERIAL'
+  theme: 'LIGHT' | 'DARK' | 'SYSTEM'
+  timeZone: string
+  sex: 'MALE' | 'FEMALE' | null
+  bodyFatSource: 'DEVICE' | 'ESTIMATED' | 'AUTO'
+  heightDisplay: string | null
+  stepsGoal: number
+  dateOfBirth: string | null
+  age: number | null
+}
+
+const timeZones = [
+  'America/New_York',
+  'America/Chicago',
+  'America/Denver',
+  'America/Los_Angeles',
+  'UTC',
+  'Europe/London',
+  'Europe/Paris',
+]
+
+export default function ProfileSettings({ userId, onSaved }: { userId?: string; onSaved?: () => void }) {
+  const endpoint = userId ? `/api/me?userId=${encodeURIComponent(userId)}` : '/api/me'
+  const { setTheme } = useTheme()
+  const [form, setForm] = useState<Me | null>(null)
+  const [height, setHeight] = useState('')
+  const [error, setError] = useState('')
+  const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    fetch(endpoint)
+      .then(async (res) => {
+        if (!res.ok) { setError('Could not load profile'); return }
+        const data = await res.json()
+        if (!data?.name) return
+        setForm({
+          ...data,
+          stepsGoal: data.stepsGoal ?? 10000,
+          dateOfBirth: data.dateOfBirth ?? null,
+          age: data.age ?? null,
+        })
+        setHeight(data.heightDisplay ?? '')
+      }).catch(() => setError('Could not load profile'))
+  }, [endpoint])
+
+  async function onSubmit(e: FormEvent) {
+    e.preventDefault()
+    if (!form) return
+    setSaving(true)
+    try {
+      const res = await fetch(endpoint, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          name: form.name,
+          displayUnit: form.displayUnit,
+          theme: form.theme,
+          timeZone: form.timeZone,
+          sex: form.sex,
+          bodyFatSource: form.bodyFatSource,
+          height: height || null,
+          stepsGoal: form.stepsGoal,
+          dateOfBirth: form.dateOfBirth || null,
+        }),
+      })
+      if (!res.ok) {
+        const result = await res.json()
+        toast.error(result.error || 'Could not save profile')
+        return
+      }
+      if (!userId) await setTheme(form.theme)
+      onSaved?.()
+      toast.success('Profile saved')
+    } catch { toast.error('Could not save profile') } finally { setSaving(false) }
+  }
+
+  if (!form) {
+    return (
+      <>
+        <section className="app-page-container">{error || 'Loading…'}</section>
+      </>
+    )
+  }
+
+  return (
+    <>
+      <section className="app-page-container max-w-2xl">
+        <h2 className="text-2xl font-bold mb-6">{userId ? 'Profile' : 'Settings'}</h2>
+        <form onSubmit={onSubmit} className="card space-y-4">
+          <label className="block text-sm">
+            Name
+            <input className="input mt-1" required maxLength={200} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} />
+          </label>
+          <label className="block text-sm">
+            Units
+            <select className="input mt-1" value={form.displayUnit} onChange={(e) => {
+              const unit = e.target.value as Me['displayUnit']
+              if (height.trim() && Number(height) > 0 && unit !== form.displayUnit) {
+                setHeight((unit === 'METRIC' ? inToCm(height) : cmToIn(height)).toFixed(4))
+              }
+              setForm({ ...form, displayUnit: unit })
+            }}>
+              <option value="IMPERIAL">Imperial (lb / in)</option>
+              <option value="METRIC">Metric (kg / cm)</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            Height ({form.displayUnit === 'IMPERIAL' ? 'in' : 'cm'})
+            <input className="input mt-1" type="number" min="0.01" step="any" value={height} onChange={(e) => setHeight(e.target.value)} />
+          </label>
+          <label className="block text-sm">
+            Date of birth
+            <input
+              className="input mt-1"
+              type="date"
+              value={form.dateOfBirth ?? ''}
+              onChange={(e) => setForm({ ...form, dateOfBirth: e.target.value || null })}
+            />
+            {form.age != null && (
+              <span className="mt-1 block" style={{ color: 'var(--color-muted)' }}>
+                Age {form.age}
+              </span>
+            )}
+          </label>
+          <label className="block text-sm">
+            Sex (for Navy body-fat estimate)
+            <select
+              className="input mt-1"
+              value={form.sex ?? ''}
+              onChange={(e) => setForm({ ...form, sex: (e.target.value || null) as Me['sex'] })}
+            >
+              <option value="">Not set</option>
+              <option value="MALE">Male</option>
+              <option value="FEMALE">Female</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            Body fat source
+            <select className="input mt-1" value={form.bodyFatSource} onChange={(e) => setForm({ ...form, bodyFatSource: e.target.value as Me['bodyFatSource'] })}>
+              <option value="AUTO">Auto (device %, then Navy estimate)</option>
+              <option value="DEVICE">Device % only</option>
+              <option value="ESTIMATED">Navy estimate only</option>
+            </select>
+          </label>
+          <label className="block text-sm">
+            Daily step goal
+            <input
+              className="input mt-1"
+              type="number"
+              min={1}
+
+              step={1}
+              value={form.stepsGoal}
+              onChange={(e) => setForm({ ...form, stepsGoal: Number(e.target.value) || 10000 })}
+            />
+          </label>
+          <label className="block text-sm">
+            Time zone
+            <select className="input mt-1" value={form.timeZone} onChange={(e) => setForm({ ...form, timeZone: e.target.value })}>
+              {timeZones.map((tz) => (
+                <option key={tz} value={tz}>{tz}</option>
+              ))}
+              {!timeZones.includes(form.timeZone) && <option value={form.timeZone}>{form.timeZone}</option>}
+            </select>
+          </label>
+          <label className="block text-sm">
+            Theme
+            <select className="input mt-1" value={form.theme} onChange={(e) => setForm({ ...form, theme: e.target.value as Me['theme'] })}>
+              <option value="SYSTEM">System</option>
+              <option value="LIGHT">Light</option>
+              <option value="DARK">Dark</option>
+            </select>
+          </label>
+          <button type="submit" className="btn btn-primary" disabled={saving}>{saving ? 'Saving…' : 'Save profile'}</button>
+        </form>
+      </section>
+    </>
+  )
+}

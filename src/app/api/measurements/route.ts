@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAccount } from '@/lib/session'
+import { requireManagedAccount } from '@/lib/session'
 import { presentMeasurement } from '@/lib/present'
 import { optionalLengthToCanonical, weightToCanonical } from '@/lib/serialize'
 import { storedTemperature } from '@/lib/vitals'
@@ -14,7 +14,7 @@ const optionalOxygen = optionalDecimal.refine(
 
 const createSchema = z
   .object({
-    recordedAt: z.string().min(1),
+    recordedAt: z.string().datetime({ offset: true }),
     weight: optionalDecimal,
     steps: optionalSteps,
     heartRate: optionalHeartRate,
@@ -57,8 +57,8 @@ const createSchema = z
     message: 'Weight must be a positive number',
   })
 
-export async function GET() {
-  const { account, error } = await requireAccount()
+export async function GET(req: Request) {
+  const { account, error } = await requireManagedAccount(req)
   if (error) return error
 
   const rows = await prisma.measurement.findMany({
@@ -70,7 +70,7 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
-  const { account, error } = await requireAccount()
+  const { account, error } = await requireManagedAccount(req)
   if (error) return error
 
   try {

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { requireAccount } from '@/lib/session'
+import { requireManagedAccount } from '@/lib/session'
 import { presentUser } from '@/lib/present'
 import { lengthToCanonical } from '@/lib/serialize'
 import { z } from 'zod'
@@ -12,10 +12,12 @@ import {
 } from '@/generated/prisma/client'
 
 const patchSchema = z.object({
-  name: z.string().min(1).optional(),
+  name: z.string().trim().min(1).max(200).optional(),
   displayUnit: z.nativeEnum(UnitSystem).optional(),
   theme: z.nativeEnum(ThemePreference).optional(),
-  timeZone: z.string().min(1).optional(),
+  timeZone: z.string().refine((value) => {
+    try { new Intl.DateTimeFormat('en-US', { timeZone: value }); return true } catch { return false }
+  }, 'Invalid time zone').optional(),
   sex: z.nativeEnum(Sex).nullable().optional(),
   bodyFatSource: z.nativeEnum(BodyFatSource).optional(),
   height: z.union([z.string(), z.number(), z.null()]).optional(),
@@ -25,14 +27,14 @@ const patchSchema = z.object({
     .optional(),
 })
 
-export async function GET() {
-  const { account, error } = await requireAccount()
+export async function GET(req: Request) {
+  const { account, error } = await requireManagedAccount(req)
   if (error) return error
   return NextResponse.json(presentUser(account))
 }
 
 export async function PATCH(req: NextRequest) {
-  const { account, error } = await requireAccount()
+  const { account, error } = await requireManagedAccount(req)
   if (error) return error
 
   try {
@@ -47,6 +49,12 @@ export async function PATCH(req: NextRequest) {
           ? null
           : lengthToCanonical(String(body.height), unit)
 
+    if (heightCm != null && (!Number.isFinite(Number(heightCm)) || Number(heightCm) <= 0 || Number(heightCm) > 9999)) {
+      return NextResponse.json({ error: 'Height must be a positive number below 9999 cm' }, { status: 400 })
+    }
+    if (body.dateOfBirth && (new Date(`${body.dateOfBirth}T00:00:00.000Z`).toISOString().slice(0, 10) !== body.dateOfBirth || body.dateOfBirth > new Date().toISOString().slice(0, 10))) {
+      return NextResponse.json({ error: 'Invalid date of birth' }, { status: 400 })
+    }
     const updated = await prisma.user.update({
       where: { id: account.id },
       data: {
@@ -71,6 +79,9 @@ export async function PATCH(req: NextRequest) {
   } catch (err) {
     if (err instanceof z.ZodError) {
       return NextResponse.json({ error: 'Invalid input', details: err.issues }, { status: 400 })
+    }
+    if (err instanceof RangeError) {
+      return NextResponse.json({ error: 'Invalid profile value' }, { status: 400 })
     }
     console.error(err)
     return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
