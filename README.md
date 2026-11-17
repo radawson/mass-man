@@ -19,7 +19,7 @@ Live site: `https://mass.partridgecrossing.org` (nginx on ptx-web02, HAProxy in 
 
 ## Tech stack
 
-- **App**: Next.js 16 (App Router), React 19, TypeScript 5.9.3
+- **App**: Next.js 16 (App Router), React 19, TypeScript 6.0.3
 - **UI**: Tailwind CSS 4, Lucide, React Hot Toast
 - **Database**: PostgreSQL, Prisma 7 (`@prisma/adapter-pg`)
 - **Auth**: NextAuth 4 (credentials; Keycloak OIDC if env vars are set)
@@ -35,7 +35,9 @@ There is no Socket.IO. The production process is a plain `next start` on `127.0.
 - PostgreSQL 14+ (Docker Compose is enough for local)
 - Keycloak (optional, SSO only)
 
-TypeScript is pinned to **5.9.3**. Do not let it float to 6/7; `ts-jest` breaks.
+TypeScript and its override are pinned to **6.0.3**. `ts-jest` 29.4.15 supports TypeScript `>=4.3 <7`, and `typescript-eslint` 8 supports `<6.1`, so TypeScript 7 must wait for both tools to support it.
+
+ESLint stays on **9** because `eslint-config-next` 16's `eslint-plugin-react` dependency excludes ESLint 10 from its peer range. Prisma's CLI, client, and PostgreSQL adapter stay together on stable **7.10.1**; the registry's `latest` Prisma 8 tag currently points to a release candidate. Recheck these constraints before the next major upgrade; avoid forcing incompatible peers or installing prereleases.
 
 ## Quick start
 
@@ -79,7 +81,7 @@ Navy needs **Settings → sex and height**, plus neck and waist on the measureme
 
 ## Production (ptx-web02)
 
-App directory: `/home/torvaldsl/mass-man`. Process manager: **PM2** (`mass-man`). Nginx vhost: `mass.conf` → `127.0.0.1:3004`. TLS and hostname routing belong on HAProxy (`10.10.13.1`).
+App directory: `/home/torvaldsl/mass-man`. Process manager: **systemd** (`mass-man.service`). Nginx vhost: `mass.conf` → `127.0.0.1:3004`. TLS and hostname routing belong on HAProxy (`10.10.13.1`).
 
 ### Clone or update
 
@@ -96,7 +98,7 @@ git pull
 npm ci
 npx prisma migrate deploy
 npm run build
-pm2 restart mass-man
+sudo systemctl restart mass-man.service
 ```
 
 Preserve `.env` across reclones. It is gitignored.
@@ -117,17 +119,20 @@ Use a dedicated database if the role has `CREATEDB`. Otherwise a **schema** on a
 
 Leave `KEYCLOAK_*` unset for credentials-only. Client setup: [documents/KEYCLOAK.md](documents/KEYCLOAK.md).
 
-### PM2
+### systemd
+
+Install and enable the unit after the first production build:
 
 ```bash
-export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$PATH"
 cd ~/mass-man
-pm2 start npm --name mass-man -- start
-pm2 save
-pm2 logs mass-man
+sudo install -m 644 deploy/mass-man.service /etc/systemd/system/mass-man.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now mass-man.service
+systemctl status mass-man.service --no-pager
+journalctl -u mass-man.service -n 100 --no-pager
 ```
 
-Optional systemd unit: `deploy/mass-man.service`. Do not enable it while PM2 is bound to port 3004.
+The unit loads `.env`, runs as `torvaldsl`, and selects the newest installed nvm Node. See [Deployment](documents/DEPLOYMENT.md) for migration from an older PM2 setup.
 
 ### Nginx
 
@@ -213,7 +218,7 @@ npx prisma studio
 
 **Prisma / Node** — Use Node 20.19+. After pulling schema changes: `npx prisma generate`.
 
-**TypeScript 7** — If `npm test` fails inside `ts-jest`, check `node_modules/typescript/package.json`. The repo `overrides` field must keep 5.9.3.
+**TypeScript 7** — If `npm test` fails inside `ts-jest`, check `node_modules/typescript/package.json`. Keep both the direct dependency and the `overrides` field pinned to 6.0.3 until the test and lint tools support TypeScript 7.
 
 **Empty body fat** — Set sex and height in Settings; log neck and waist (and hips if female); or log a device %.
 
@@ -221,7 +226,7 @@ npx prisma studio
 
 **Wrong Postgres schema** — Production uses `?schema=massman`. Migrating against `public` on a shared database will collide with other apps.
 
-**PM2 PATH** — Non-interactive SSH does not load nvm. Prefix `PATH=$HOME/.nvm/versions/node/v22.21.1/bin:$PATH`.
+**Node PATH** — Non-interactive SSH does not load nvm. Prefix build and migration commands with `PATH=$HOME/.nvm/versions/node/v22.21.1/bin:$PATH`. The systemd unit selects Node from the installed nvm versions itself.
 
 ## Documentation
 

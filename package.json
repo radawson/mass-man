@@ -24,7 +24,7 @@
     "bcryptjs": "^3.0.3",
     "date-fns": "^4.4.0",
     "decimal.js": "^10.6.0",
-    "dotenv": "^17.4.2",
+    "dotenv": "^18.0.10",
     "lucide-react": "^1.74.0",
     "next": "16.4.6",
     "next-auth": "^4.24.15",
@@ -51,11 +51,11 @@
     "prisma": "^7.10.1",
     "ts-jest": "^29.4.15",
     "tsx": "^4.23.15",
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   },
   "overrides": {
     "@types/pg": "$@types/pg",
-    "typescript": "5.9.3"
+    "typescript": "6.0.3"
   },
   "engines": {
     "node": "^20.19 || ^22.12 || >=24.0"

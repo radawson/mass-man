@@ -37,8 +37,7 @@ Roles are read from `resource_access[ptx-mass-man].roles` on the access token. A
 ## After changing `.env`
 
 ```bash
-export PATH="$HOME/.nvm/versions/node/v22.21.1/bin:$PATH"
-pm2 restart mass-man --update-env
+sudo systemctl restart mass-man.service
 curl -sS http://127.0.0.1:3004/api/auth/providers
 ```
 

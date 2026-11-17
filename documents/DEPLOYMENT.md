@@ -11,10 +11,10 @@ For local Docker Postgres and product behavior, see the [README](../README.md).
 | Source | `git clone https://github.com/radawson/mass-man.git` |
 | App dir | `/home/torvaldsl/mass-man` |
 | Env | `/home/torvaldsl/mass-man/.env` (gitignored) |
-| Process | PM2 app `mass-man` (`npm start`) |
-| Node | nvm `v22.21.1` |
+| Process | systemd `mass-man.service` |
+| Node | Newest installed nvm version (unit); examples below use `v22.21.1` |
 | Nginx | `/etc/nginx/sites-available/mass.conf` |
-| Optional unit | `deploy/mass-man.service` (do not run beside PM2) |
+| Unit | `deploy/mass-man.service` → `/etc/systemd/system/mass-man.service` |
 
 ## Database
 
@@ -42,8 +42,9 @@ npm ci
 npx prisma migrate deploy
 # optional: npm run db:seed   then change the seed password
 npm run build
-pm2 start npm --name mass-man -- start
-pm2 save
+sudo install -m 644 deploy/mass-man.service /etc/systemd/system/mass-man.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now mass-man.service
 ```
 
 Confirm the app before nginx:
@@ -75,22 +76,37 @@ git pull
 npm ci
 npx prisma migrate deploy
 npm run build
-pm2 restart mass-man
+sudo systemctl restart mass-man.service
+systemctl is-active mass-man.service
+curl -s -o /dev/null -w "%{http_code}\n" http://127.0.0.1:3004/login
 ```
 
 Keep `.env` untracked. If you replace the directory, copy `.env` aside first.
 
-## systemd instead of PM2
+## Service management
+
+```bash
+systemctl status mass-man.service --no-pager
+systemctl is-enabled mass-man.service
+journalctl -u mass-man.service -n 100 --no-pager
+sudo systemctl restart mass-man.service
+```
+
+The unit loads `.env` on every start and runs Next directly on `127.0.0.1:3004` as `torvaldsl`. After changing the installed unit, run `sudo systemctl daemon-reload` and restart the service. After changing only `.env`, restart the service.
+
+## Migrate an older PM2 installation
+
+Only for a host still running the app under PM2: after building the app, remove its PM2 entry before enabling systemd so both managers do not compete for port 3004. Leave other PM2 apps alone.
 
 ```bash
 pm2 delete mass-man
 pm2 save
-sudo cp deploy/mass-man.service /etc/systemd/system/mass-man.service
+sudo install -m 644 deploy/mass-man.service /etc/systemd/system/mass-man.service
 sudo systemctl daemon-reload
-sudo systemctl enable --now mass-man
+sudo systemctl enable --now mass-man.service
 ```
 
-Edit `WorkingDirectory`, `EnvironmentFile`, and `PATH` in the unit if the install path or Node version changes.
+Edit `WorkingDirectory`, `EnvironmentFile`, and the nvm path in `ExecStart` if the install location or service user changes. Node version upgrades within the existing nvm directory are picked up on service restart.
 
 ## Keycloak
 
